@@ -20,6 +20,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
@@ -30,23 +32,12 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST = 0;
 
-    private SongViewModel songList;
-    private ListView songsListView;
-    private MediaPlayer mediaPlayer;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
         if(checkPermissions()) init();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if(mediaPlayer.isPlaying()) mediaPlayer.stop();
-        mediaPlayer.release();
     }
 
     @Override
@@ -81,61 +72,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init(){
-        songList = ViewModelProviders.of(this).get(SongViewModel.class);
-        songList.getSongList().observe(this, new Observer<List<Song>>() {
-            @Override
-            public void onChanged(List<Song> songs) {
-                songsListView.setAdapter(new CustomAdapter());
-            }
-        });
-        songsListView = findViewById(R.id.songs_listview);
-        songsListView.setAdapter(new CustomAdapter());
-        mediaPlayer = new MediaPlayer();
-    }
-
-    private View getItemView(final int index){
-        final View newView = getLayoutInflater().inflate(R.layout.song_listview_item, null);
-        ((TextView)newView.findViewById(R.id.textView_song_title)).setText(songList.get(index).getTitle());
-        newView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                play(songList.get(index).getData());
-            }
-        });
-        return newView;
-    }
-
-    private void play(String path){
-        if(mediaPlayer.isPlaying()) mediaPlayer.stop();
-        mediaPlayer.reset();
-        try{
-            mediaPlayer.setDataSource(path);
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-        }catch(IOException e){
-            Toast.makeText(getApplicationContext(), "Impossibile riprodurre il file", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private class CustomAdapter extends BaseAdapter{
-        @Override
-        public int getCount() {
-            return songList.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return null;
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return 0;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            return getItemView(position);
-        }
+        Fragment newFragment = new SongListFragment();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, newFragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
     }
 }

@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,6 +19,7 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 
+import java.io.IOException;
 import java.util.List;
 
 public class SongListFragment extends Fragment{
@@ -29,7 +31,6 @@ public class SongListFragment extends Fragment{
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         songList = ViewModelProviders.of(this).get(SongViewModel.class);
         songList.getSongList().observe(this, new Observer<List<Song>>() {
             @Override
@@ -46,6 +47,18 @@ public class SongListFragment extends Fragment{
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_songlist, container, false);
+    }
+
+    private void play(String path){
+        if(mediaPlayer.isPlaying()) mediaPlayer.stop();
+        mediaPlayer.reset();
+        try{
+            mediaPlayer.setDataSource(path);
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+        }catch(IOException e){
+            Toast.makeText(getContext(), "Impossibile riprodurre il file", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private View getItemView(final int index){
