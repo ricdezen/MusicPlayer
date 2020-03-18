@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Music Player</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_id">music-player-foreground</string>
+    <string name="notification_channel_name">Foreground Service</string>
+    <string name="notification_channel_description">Notification showing on the status bar when the app is playing music.</string>
 </resources>

@@ -21,8 +21,19 @@ import java.util.List;
  */
 public class PlayerService extends Service {
 
+    private static final int NOTIFICATION_ID = 1234;
+
     private SongManager songManager;
     private MediaPlayer mediaPlayer;
+
+    /**
+     * When created the Service makes sure the notification channel is enabled if needed.
+     */
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        NotificationHelper.getInstance(this).createChannelIfNeeded();
+    }
 
     /**
      * When the Service is started the useful Objects are initialized.
@@ -68,6 +79,10 @@ public class PlayerService extends Service {
             mediaPlayer.setDataSource(songs.get(position).getDataPath());
             mediaPlayer.prepare();
             mediaPlayer.start();
+            startForeground(
+                    NOTIFICATION_ID,
+                    NotificationHelper.getInstance(this).getServiceNotification(this)
+            );
         } catch (IOException e) {
             Toast.makeText(this, "Impossibile riprodurre il file", Toast.LENGTH_SHORT).show();
         }

@@ -94,16 +94,11 @@ public class SongListFragment extends Fragment {
                 songs -> songsListView.setAdapter(new CustomAdapter()));
         songsListView = rootView.findViewById(R.id.songs_listview);
         songsListView.setAdapter(new CustomAdapter());
-
-        if (musicController != null)
-            musicController.resume();
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (musicController != null)
-            musicController.pause();
     }
 
     @Override
