@@ -71,7 +71,6 @@ public class NotificationHelper {
     }
 
     /**
-     * TODO call this somewhere
      * Creates the channel if the notificationManager is not null. This method only hides the
      * actual private method that requires api level >= 26.
      */

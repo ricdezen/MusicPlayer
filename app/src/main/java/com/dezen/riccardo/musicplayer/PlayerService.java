@@ -1,5 +1,6 @@
 package com.dezen.riccardo.musicplayer;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
@@ -64,6 +65,15 @@ public class PlayerService extends Service {
     }
 
     /**
+     * Method to retrieve the Notification for this Service.
+     *
+     * @return The {@link Notification} built through {@link NotificationHelper}.
+     */
+    private Notification getNotification() {
+        return NotificationHelper.getInstance(this).getServiceNotification(this);
+    }
+
+    /**
      * Method to start playing a song at a certain position in the list.
      *
      * @param position The position of the song.
@@ -81,7 +91,7 @@ public class PlayerService extends Service {
             mediaPlayer.start();
             startForeground(
                     NOTIFICATION_ID,
-                    NotificationHelper.getInstance(this).getServiceNotification(this)
+                    getNotification()
             );
         } catch (IOException e) {
             Toast.makeText(this, "Impossibile riprodurre il file", Toast.LENGTH_SHORT).show();
