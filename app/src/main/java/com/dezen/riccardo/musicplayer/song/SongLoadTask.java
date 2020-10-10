@@ -1,7 +1,11 @@
 package com.dezen.riccardo.musicplayer.song;
 
+import android.content.ContentUris;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.provider.MediaStore;
+import android.support.v4.media.MediaMetadataCompat;
 
 import androidx.lifecycle.MutableLiveData;
 
@@ -47,16 +51,25 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
 
         int loadedSongs = 0;
         List<Song> songs = new ArrayList<>();
+        MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
 
         cursor.moveToFirst();
         do {
-            songs.add(new Song(
-                    cursor.getString(1),
-                    cursor.getString(2),
-                    cursor.getString(3),
-                    cursor.getString(4),
-                    cursor.getString(5)
-            ));
+            String id = cursor.getString(0);
+            Uri uri = ContentUris.withAppendedId(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    Long.parseLong(id)
+            );
+
+            builder
+                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, id)
+                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, String.valueOf(uri))
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, cursor.getString(1))
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, cursor.getString(2))
+                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, cursor.getString(3))
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, cursor.getLong(4));
+
+            songs.add(new Song(builder.build()));
             publishProgress(++loadedSongs / count * 100);
         } while (cursor.moveToNext());
 

@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Music Player</string>
 
+    <!-- -->
+    <string name="pause">Pause</string>
+
     <!-- Notifications -->
     <string name="notification_channel_id">music-player-foreground</string>
     <string name="notification_channel_name">Foreground Service</string>

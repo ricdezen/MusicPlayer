@@ -9,10 +9,12 @@ import android.os.Build;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+import androidx.media.session.MediaButtonReceiver;
 
 import java.util.Objects;
 
@@ -91,7 +93,7 @@ public class NotificationHelper {
         NotificationChannel channel = new NotificationChannel(
                 resources.getString(R.string.notification_channel_id),
                 resources.getString(R.string.notification_channel_name),
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_LOW
         );
         channel.setDescription(resources.getString(R.string.notification_channel_description));
         notificationManager.createNotificationChannel(channel);
@@ -119,6 +121,7 @@ public class NotificationHelper {
         MediaDescriptionCompat description = metadata.getDescription();
 
         builder
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 // Add the metadata for the currently playing track.
                 .setContentTitle(description.getTitle())
                 .setContentText(description.getSubtitle())
@@ -126,9 +129,29 @@ public class NotificationHelper {
                 .setLargeIcon(description.getIconBitmap())
                 // Enable launching the player by clicking the notification.
                 .setContentIntent(controller.getSessionActivity())
+                .setSmallIcon(R.drawable.paperclip_black)
+                .setColor(service.getResources().getColor(R.color.colorPrimary))
                 // TODO buttons, metadata and such.
                 // Make the transport controls visible on the lock screen.
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                // Add a pause button
+                .addAction(
+                        R.drawable.play_arrow, service.getString(R.string.pause),
+                        MediaButtonReceiver.buildMediaButtonPendingIntent(
+                                service,
+                                PlaybackStateCompat.ACTION_PLAY_PAUSE
+                        ))
+                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                        .setMediaSession(service.getMediaSession().getSessionToken())
+                        .setShowActionsInCompactView(0)
+
+                        // Add a cancel button
+                        .setShowCancelButton(true)
+                        .setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(
+                                service,
+                                PlaybackStateCompat.ACTION_STOP))
+                );
+
 
         return builder.build();
     }

@@ -24,8 +24,8 @@ public class SongLoader {
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
             MediaStore.Audio.Media.ALBUM,
+            // TODO Duration api level 29?
             MediaStore.Audio.Media.DURATION,
-            MediaStore.Audio.Media.DATA
     };
 
     /**

@@ -1,5 +1,9 @@
 package com.dezen.riccardo.musicplayer.song;
 
+import android.net.Uri;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaMetadataCompat;
+
 import androidx.annotation.NonNull;
 
 /**
@@ -9,53 +13,49 @@ import androidx.annotation.NonNull;
  */
 public class Song {
 
-    private String title;
-    private String author;
-    private String album;
-    private String duration;
-    private String dataPath;
+    private MediaMetadataCompat metadata;
+    private MediaBrowserCompat.MediaItem mediaItem;
 
     /**
-     * @param title    The title of the song.
-     * @param author   The author of the song.
-     * @param album    The album of the song.
-     * @param duration The duration of the song.
-     * @param dataPath The path on disk for the song.
+     * @param metadata The {@link MediaMetadataCompat} for this Song. Must contain at least: id,
+     *                 uri, title, artist, album, duration.
      */
-    public Song(@NonNull String title,
-                @NonNull String author,
-                @NonNull String album,
-                @NonNull String duration,
-                @NonNull String dataPath) {
-        this.title = title;
-        this.author = author;
-        this.album = album;
-        this.duration = duration;
-        this.dataPath = dataPath;
+    public Song(@NonNull MediaMetadataCompat metadata) {
+        mediaItem = new MediaBrowserCompat.MediaItem(
+                metadata.getDescription(),
+                MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+        );
+
+        this.metadata = metadata;
+    }
+
+    @NonNull
+    public MediaMetadataCompat getMetadata() {
+        return metadata;
     }
 
     @NonNull
     public String getTitle() {
-        return title;
+        return String.valueOf(metadata.getDescription().getTitle());
     }
 
     @NonNull
     public String getAuthor() {
-        return author;
+        return metadata.getString(MediaMetadataCompat.METADATA_KEY_AUTHOR);
     }
 
     @NonNull
     public String getAlbum() {
-        return album;
+        return metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
     }
 
     @NonNull
     public String getDuration() {
-        return duration;
+        return metadata.getString(MediaMetadataCompat.METADATA_KEY_DURATION);
     }
 
     @NonNull
-    public String getDataPath() {
-        return dataPath;
+    public Uri getUri() {
+        return Uri.parse(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI));
     }
 }

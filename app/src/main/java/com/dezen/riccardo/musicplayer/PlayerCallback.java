@@ -3,6 +3,7 @@ package com.dezen.riccardo.musicplayer;
 import android.app.Notification;
 import android.content.Intent;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.util.Log;
 
 /**
  * Callback class implementing the various methods for communicating between the

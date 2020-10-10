@@ -1,6 +1,8 @@
 package com.dezen.riccardo.musicplayer;
 
 import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
@@ -12,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.media.MediaBrowserServiceCompat;
+import androidx.media.session.MediaButtonReceiver;
 
 import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
@@ -28,6 +31,8 @@ public class PlayerService extends MediaBrowserServiceCompat {
 
     public static final String LOG_TAG = "PlayerService";
     public static final int NOTIFICATION_ID = 1234;
+
+    private static final int ACTIVITY_PENDING_INTENT_CODE = 4321;
 
     private MediaSessionCompat mediaSession;
     private PlaybackStateCompat.Builder playbackStateBuilder;
@@ -51,18 +56,30 @@ public class PlayerService extends MediaBrowserServiceCompat {
         // Setup PlaybackStateBuilder.
         long actions = PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE;
         playbackStateBuilder = new PlaybackStateCompat.Builder()
+                .setState(PlaybackStateCompat.STATE_NONE, 0, 0)
                 .setActions(actions);
 
         // Create MediaSession.
         mediaSession = new MediaSessionCompat(this, LOG_TAG);
         mediaSession.setPlaybackState(playbackStateBuilder.build());
         mediaSession.setCallback(new PlayerCallback(this));
+        mediaSession.setSessionActivity(PendingIntent.getActivity(
+                this, ACTIVITY_PENDING_INTENT_CODE,
+                new Intent(this, MainActivity.class),
+                0
+        ));
 
         // Set the token for this Service. Allows finding the Session from outside.
         setSessionToken(mediaSession.getSessionToken());
 
         // Call the Song Manager.
         songManager = SongManager.getInstance(this);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        MediaButtonReceiver.handleIntent(mediaSession, intent);
+        return super.onStartCommand(intent, flags, startId);
     }
 
     /**
@@ -109,14 +126,21 @@ public class PlayerService extends MediaBrowserServiceCompat {
         List<Song> songs = songManager.getSongs().getValue();
         if (songs == null) return;
 
+        // TODO yo uhm like resume dude.
         if (mediaPlayer.isPlaying()) mediaPlayer.stop();
         mediaPlayer.reset();
         try {
-            Log.d("PlayerService", "Playing song " + songs.get(currentSong).getTitle());
-            mediaPlayer.setDataSource(songs.get(currentSong).getDataPath());
+            Song song = songs.get(currentSong);
+            Log.d("PlayerService", "Playing song " + song.getTitle());
+            mediaPlayer.setDataSource(this, song.getUri());
             mediaPlayer.prepare();
             mediaPlayer.start();
+            mediaSession.setPlaybackState(playbackStateBuilder.setState(
+                    PlaybackStateCompat.STATE_PLAYING, 0, 0
+            ).build());
+            mediaSession.setMetadata(song.getMetadata());
         } catch (IOException e) {
+            // TODO english bruh.
             Toast.makeText(this, "Impossibile riprodurre il file", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
@@ -127,6 +151,12 @@ public class PlayerService extends MediaBrowserServiceCompat {
      */
     public void pause() {
         mediaPlayer.pause();
+        mediaSession.setPlaybackState(playbackStateBuilder.setState(
+                PlaybackStateCompat.STATE_PAUSED,
+                mediaPlayer.getCurrentPosition(),
+                // TODO playback speed
+                0
+        ).build());
     }
 
     /**
@@ -134,6 +164,12 @@ public class PlayerService extends MediaBrowserServiceCompat {
      */
     public void stopPlayer() {
         mediaPlayer.stop();
+        mediaSession.setPlaybackState(playbackStateBuilder.setState(
+                PlaybackStateCompat.STATE_STOPPED,
+                mediaPlayer.getCurrentPosition(),
+                // TODO playback speed
+                0
+        ).build());
     }
 
     /**
