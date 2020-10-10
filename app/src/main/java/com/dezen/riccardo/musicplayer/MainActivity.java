@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,12 +21,30 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST = 0;
 
+    private PlayerClient playerClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setSupportActionBar(findViewById(R.id.toolbar));
-        if (checkPermissions()) init();
+        ensureNotificationServiceExists();
+        playerClient = new PlayerClient(this);
+        if (checkPermissions()) {
+            init();
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        playerClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        playerClient.disconnect();
     }
 
     @Override
@@ -40,10 +59,14 @@ public class MainActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             String[] permissions;
             if (Build.VERSION.SDK_INT < 28)
-                permissions = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
+                permissions = new String[]{
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                };
             else
                 permissions = new String[]{
                         Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Manifest.permission.FOREGROUND_SERVICE
                 };
             ActivityCompat.requestPermissions(
@@ -56,9 +79,21 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    private void ensureNotificationServiceExists() {
+        try {
+            NotificationHelper.getInstance(this);
+        } catch (NullPointerException e) {
+            Toast.makeText(
+                    this,
+                    R.string.no_notification_service_error,
+                    Toast.LENGTH_LONG
+            ).show();
+        }
+    }
+
     private void init() {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, new SongListFragment());
+        transaction.replace(R.id.fragment_container, new SongListFragment(playerClient));
         transaction.commit();
     }
 }

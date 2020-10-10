@@ -10,6 +10,7 @@ import java.util.List;
 
 /**
  * Class defining the shared data shared among the app.
+ * TODO Make Observable to wrap songList's observation. This way getSongs can just return a List.
  *
  * @author Riccardo De Zen.
  */

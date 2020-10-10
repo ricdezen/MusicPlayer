@@ -6,9 +6,13 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
+import android.support.v4.media.MediaDescriptionCompat;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaControllerCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
 
 import java.util.Objects;
 
@@ -99,20 +103,32 @@ public class NotificationHelper {
      * < 26.
      * If the channel is not available, the default one is used.
      *
-     * @param context The calling Context, used to create the {@link Notification.Builder}.
+     * @param service The calling Service.
      */
     @NonNull
-    public Notification getServiceNotification(@NonNull Context context) {
-        Notification.Builder builder;
+    public Notification getServiceNotification(@NonNull PlayerService service) {
+        NotificationCompat.Builder builder;
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-            builder = getLowApiBuilder(context);
+            builder = getLowApiBuilder(service);
         else
-            builder = getChannelBuilder(context);
+            builder = getChannelBuilder(service);
+
+        MediaControllerCompat controller = service.getMediaSession().getController();
+        MediaMetadataCompat metadata = controller.getMetadata();
+        MediaDescriptionCompat description = metadata.getDescription();
 
         builder
-                .setContentTitle("Prova")
-                .setContentText("Prova ancora di più");
+                // Add the metadata for the currently playing track.
+                .setContentTitle(description.getTitle())
+                .setContentText(description.getSubtitle())
+                .setSubText(description.getDescription())
+                .setLargeIcon(description.getIconBitmap())
+                // Enable launching the player by clicking the notification.
+                .setContentIntent(controller.getSessionActivity())
+                // TODO buttons, metadata and such.
+                // Make the transport controls visible on the lock screen.
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
         return builder.build();
     }
@@ -121,8 +137,8 @@ public class NotificationHelper {
      * @param context The calling Context, used to create the {@link Notification.Builder}.
      * @return A {@link Notification.Builder} with no associated channel.
      */
-    private Notification.Builder getLowApiBuilder(@NonNull Context context) {
-        return new Notification.Builder(context);
+    private NotificationCompat.Builder getLowApiBuilder(@NonNull Context context) {
+        return new NotificationCompat.Builder(context);
     }
 
     /**
@@ -133,8 +149,8 @@ public class NotificationHelper {
      * @return A {@link Notification.Builder} associated to the registered app channel.
      */
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private Notification.Builder getChannelBuilder(@NonNull Context context) {
-        return new Notification.Builder(
+    private NotificationCompat.Builder getChannelBuilder(@NonNull Context context) {
+        return new NotificationCompat.Builder(
                 context,
                 resources.getString(R.string.notification_channel_id)
         );

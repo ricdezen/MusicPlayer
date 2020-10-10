@@ -1,11 +1,7 @@
 package com.dezen.riccardo.musicplayer;
 
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,36 +22,22 @@ import com.dezen.riccardo.musicplayer.song.SongManager;
  */
 public class SongListFragment extends Fragment {
 
-    private MusicController musicController;
+    private PlayerClient playerClient;
     private SongManager songManager;
     private ListView songsListView;
     private View rootView;
 
-    private int currentSong;
+    private int lastSong = 0;
 
     /**
-     * Defines callbacks for service binding, passed to bindService()
+     * Create a new Fragment attached to a client for the app's Service.
+     *
+     * @param playerClient The client.
      */
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        /**
-         * @param className The class name of the service.
-         * @param service The returned Binder.
-         */
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            musicController = (MusicController) service;
-            musicController.play(currentSong);
-        }
-
-        /**
-         * @param arg0 The component that disconnected.
-         */
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            musicController = null;
-        }
-    };
+    public SongListFragment(PlayerClient playerClient) {
+        super();
+        this.playerClient = playerClient;
+    }
 
     /**
      * Initializes the {@link SongManager}.
@@ -90,56 +72,30 @@ public class SongListFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        songManager.getSongs().observe(this,
-                songs -> songsListView.setAdapter(new CustomAdapter()));
+        songManager.getSongs().observe(
+                this,
+                songs -> songsListView.setAdapter(new CustomAdapter())
+        );
         songsListView = rootView.findViewById(R.id.songs_listview);
         songsListView.setAdapter(new CustomAdapter());
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (getActivity() != null)
-            getActivity().unbindService(serviceConnection);
-    }
-
     /**
-     * This method attempts to bind to the {@link PlayerService} class to play a song.
-     * The method attempts the binding only if the IBinder is {@code null}.
-     *
+     * Play the selected Song.
+     * TODO position.
      * @param position The song to play on the Service.
      */
     private void play(int position) {
-        if (getActivity() == null)
-            return;
-
-        currentSong = position;
-
-        if (musicController != null)
-            musicController.play(position);
-        else {
-            // Making sure the service is started.
-            getActivity().startService(new Intent(getContext(), PlayerService.class));
-            // Binding to the service.
-            getActivity().bindService(
-                    new Intent(getContext(), PlayerService.class),
-                    serviceConnection,
-                    Context.BIND_AUTO_CREATE
-            );
-        }
+        lastSong = position;
+        playerClient.toggle();
     }
 
     private View getItemView(final int index) {
         View newView = getLayoutInflater().inflate(R.layout.song_listview_item, null);
-        ((TextView) newView.findViewById(R.id.textView_song_title)).setText(songManager.getSongs().getValue().get(index).getTitle());
-        newView.setOnClickListener(v ->
-                play(index)
+        ((TextView) newView.findViewById(R.id.textView_song_title)).setText(
+                songManager.getSongs().getValue().get(index).getTitle()
         );
+        newView.setOnClickListener(v -> play(index));
         return newView;
     }
 

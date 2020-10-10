@@ -1,13 +1,17 @@
 package com.dezen.riccardo.musicplayer;
 
 import android.app.Notification;
-import android.app.Service;
-import android.content.Intent;
 import android.media.MediaPlayer;
-import android.os.IBinder;
+import android.os.Bundle;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.media.MediaBrowserServiceCompat;
 
 import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
@@ -20,12 +24,16 @@ import java.util.List;
  *
  * @author Riccardo De Zen.
  */
-public class PlayerService extends Service {
+public class PlayerService extends MediaBrowserServiceCompat {
 
-    private static final int NOTIFICATION_ID = 1234;
+    public static final String LOG_TAG = "PlayerService";
+    public static final int NOTIFICATION_ID = 1234;
 
+    private MediaSessionCompat mediaSession;
+    private PlaybackStateCompat.Builder playbackStateBuilder;
     private SongManager songManager;
     private MediaPlayer mediaPlayer;
+    private int currentSong = 0;
 
     /**
      * When created the Service makes sure the notification channel is enabled if needed.
@@ -33,68 +41,84 @@ public class PlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // Media player.
+        mediaPlayer = new MediaPlayer();
+
+        // Ensure notification channel is created.
         NotificationHelper.getInstance(this).createChannelIfNeeded();
+
+        // Setup PlaybackStateBuilder.
+        long actions = PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE;
+        playbackStateBuilder = new PlaybackStateCompat.Builder()
+                .setActions(actions);
+
+        // Create MediaSession.
+        mediaSession = new MediaSessionCompat(this, LOG_TAG);
+        mediaSession.setPlaybackState(playbackStateBuilder.build());
+        mediaSession.setCallback(new PlayerCallback(this));
+
+        // Set the token for this Service. Allows finding the Session from outside.
+        setSessionToken(mediaSession.getSessionToken());
+
+        // Call the Song Manager.
+        songManager = SongManager.getInstance(this);
     }
 
     /**
-     * When the Service is started the useful Objects are initialized.
-     *
-     * @param intent  The Intent that started the Service.
-     * @param flags   The flags for the Intent.
-     * @param startId The startId for this method.
-     * @return The value of the method from the superclass.
-     */
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (songManager == null)
-            songManager = SongManager.getInstance(this);
-        if (mediaPlayer == null)
-            mediaPlayer = new MediaPlayer();
-        return super.onStartCommand(intent, flags, startId);
-    }
-
-    /**
-     * @param intent The Intent with the bind request to this Service.
-     * @return A {@link MusicController} binder, containing the actions that can be performed on
-     * the Service.
+     * TODO not yet implemented, song list is provided via other classes.
      */
     @Nullable
     @Override
-    public IBinder onBind(Intent intent) {
-        return new MusicController(this);
+    public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid,
+                                 @Nullable Bundle rootHints) {
+        return new BrowserRoot("HELLO_I_AM_TEMPORARY", null);
+    }
+
+    /**
+     * TODO not yet implemented, song list is provided via other classes.
+     */
+    @Override
+    public void onLoadChildren(@NonNull String parentId,
+                               @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
+
     }
 
     /**
      * Method to retrieve the Notification for this Service.
+     * Must be called after {@link PlayerService#play()}. Otherwise the MediaSession will have null
+     * Metadata.
      *
-     * @return The {@link Notification} built through {@link NotificationHelper}.
+     * @return The {@link Notification} for this Service, built through {@link NotificationHelper}.
      */
-    private Notification getNotification() {
+    public Notification getNotification() {
         return NotificationHelper.getInstance(this).getServiceNotification(this);
     }
 
     /**
-     * Method to start playing a song at a certain position in the list.
-     *
-     * @param position The position of the song.
+     * @return The {@link MediaSessionCompat} for this Service.
      */
-    public void play(int position) {
+    public MediaSessionCompat getMediaSession() {
+        return mediaSession;
+    }
+
+    /**
+     * Method to start playing the currently selected song.
+     */
+    public void play() {
         List<Song> songs = songManager.getSongs().getValue();
         if (songs == null) return;
-        if (position < 0 || position >= songs.size()) return;
 
         if (mediaPlayer.isPlaying()) mediaPlayer.stop();
         mediaPlayer.reset();
         try {
-            mediaPlayer.setDataSource(songs.get(position).getDataPath());
+            Log.d("PlayerService", "Playing song " + songs.get(currentSong).getTitle());
+            mediaPlayer.setDataSource(songs.get(currentSong).getDataPath());
             mediaPlayer.prepare();
             mediaPlayer.start();
-            startForeground(
-                    NOTIFICATION_ID,
-                    getNotification()
-            );
         } catch (IOException e) {
             Toast.makeText(this, "Impossibile riprodurre il file", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
         }
     }
 
@@ -102,16 +126,14 @@ public class PlayerService extends Service {
      * Method to pause the playback of a song.
      */
     public void pause() {
-        if (mediaPlayer != null)
-            mediaPlayer.pause();
+        mediaPlayer.pause();
     }
 
     /**
-     * Method to resume the playback of a song.
+     * Method to stop the playback of a song.
      */
-    public void resume() {
-        if (mediaPlayer != null)
-            mediaPlayer.start();
+    public void stopPlayer() {
+        mediaPlayer.stop();
     }
 
     /**
@@ -119,7 +141,9 @@ public class PlayerService extends Service {
      */
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        stopPlayer();
+        mediaSession.release();
         mediaPlayer.release();
+        super.onDestroy();
     }
 }
