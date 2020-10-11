@@ -15,6 +15,8 @@ import androidx.fragment.app.Fragment;
 
 import com.dezen.riccardo.musicplayer.song.SongManager;
 
+import java.util.Observer;
+
 /**
  * Fragment displaying the song list for the app.
  *
@@ -26,6 +28,9 @@ public class SongListFragment extends Fragment {
     private SongManager songManager;
     private ListView songsListView;
     private View rootView;
+
+    // When songs are updated, update List.
+    private Observer songObserver = (obj, newVal) -> songsListView.setAdapter(new CustomAdapter());
 
     /**
      * Create a new Fragment attached to a client for the app's Service.
@@ -75,8 +80,17 @@ public class SongListFragment extends Fragment {
         songsListView.setAdapter(new CustomAdapter());
 
         // Observe changes in the Song list.
-        songManager.addObserver((obj, newVal) -> songsListView.setAdapter(new CustomAdapter()));
+        songManager.addObserver(songObserver);
         songManager.updateSongs();
+    }
+
+    /**
+     * Stop Observing songs.
+     */
+    @Override
+    public void onStop() {
+        super.onStop();
+        songManager.deleteObserver(songObserver);
     }
 
     /**
