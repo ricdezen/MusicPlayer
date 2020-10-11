@@ -80,8 +80,21 @@ public class PlayerClient {
     }
 
     /**
+     * Start playing a song on the Service. Won't do anything if the Service has not been bound yet.
+     *
+     * @param id String id for the Song to play. Expected to be its position in the global list.
+     */
+    public void play(String id) {
+        if (mediaController == null)
+            return;
+
+        mediaController.getTransportControls().playFromMediaId(id, null);
+    }
+
+    /**
      * Toggle the player between playing or paused. Won't do anything if the Service has not been
-     * bound yet.
+     * bound yet. Either calls pause or play, so this should only be called when a Song actually is
+     * already playing.
      */
     public void toggle() {
         if (mediaController == null)

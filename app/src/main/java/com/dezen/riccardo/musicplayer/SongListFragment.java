@@ -83,11 +83,17 @@ public class SongListFragment extends Fragment {
     /**
      * Play the selected Song.
      * TODO position.
+     *
      * @param position The song to play on the Service.
      */
     private void play(int position) {
         lastSong = position;
-        playerClient.toggle();
+        playerClient.play(
+                // TODO see? Not pretty ffs.
+                //songManager.getSongs().getValue().get(position).getMetadata().getString
+                // (MediaMetadataCompat.METADATA_KEY_MEDIA_ID)
+                String.valueOf(position)
+        );
     }
 
     private View getItemView(final int index) {

@@ -54,7 +54,8 @@ public class PlayerService extends MediaBrowserServiceCompat {
         NotificationHelper.getInstance(this).createChannelIfNeeded();
 
         // Setup PlaybackStateBuilder.
-        long actions = PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE;
+        long actions =
+                PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID;
         playbackStateBuilder = new PlaybackStateCompat.Builder()
                 .setState(PlaybackStateCompat.STATE_NONE, 0, 0)
                 .setActions(actions);
@@ -62,7 +63,7 @@ public class PlayerService extends MediaBrowserServiceCompat {
         // Create MediaSession.
         mediaSession = new MediaSessionCompat(this, LOG_TAG);
         mediaSession.setPlaybackState(playbackStateBuilder.build());
-        mediaSession.setCallback(new PlayerCallback(this));
+        mediaSession.setCallback(playerCallback);
         mediaSession.setSessionActivity(PendingIntent.getActivity(
                 this, ACTIVITY_PENDING_INTENT_CODE,
                 new Intent(this, MainActivity.class),
@@ -103,7 +104,8 @@ public class PlayerService extends MediaBrowserServiceCompat {
 
     /**
      * Method to retrieve the Notification for this Service.
-     * Must be called after {@link PlayerService#play()}. Otherwise the MediaSession will have null
+     * Must be called after {@link PlayerService#play(int)}. Otherwise the MediaSession will have
+     * null
      * Metadata.
      *
      * @return The {@link Notification} for this Service, built through {@link NotificationHelper}.
@@ -120,24 +122,30 @@ public class PlayerService extends MediaBrowserServiceCompat {
     }
 
     /**
-     * Method to start playing the currently selected song.
+     * Prepare new song and play.
+     *
+     * @param position
      */
-    public void play() {
+    public void play(int position) {
+        if (mediaPlayer.isPlaying())
+            mediaPlayer.stop();
+        prepare(position);
+        resume();
+    }
+
+    /**
+     * Method to prepare a song to play. Resets the current mediaPlayer.
+     */
+    public void prepare(int position) {
         List<Song> songs = songManager.getSongs().getValue();
         if (songs == null) return;
 
-        // TODO yo uhm like resume dude.
-        if (mediaPlayer.isPlaying()) mediaPlayer.stop();
         mediaPlayer.reset();
         try {
-            Song song = songs.get(currentSong);
+            Song song = songs.get(position);
             Log.d("PlayerService", "Playing song " + song.getTitle());
             mediaPlayer.setDataSource(this, song.getUri());
             mediaPlayer.prepare();
-            mediaPlayer.start();
-            mediaSession.setPlaybackState(playbackStateBuilder.setState(
-                    PlaybackStateCompat.STATE_PLAYING, 0, 0
-            ).build());
             mediaSession.setMetadata(song.getMetadata());
         } catch (IOException e) {
             // TODO english bruh.
@@ -153,6 +161,19 @@ public class PlayerService extends MediaBrowserServiceCompat {
         mediaPlayer.pause();
         mediaSession.setPlaybackState(playbackStateBuilder.setState(
                 PlaybackStateCompat.STATE_PAUSED,
+                mediaPlayer.getCurrentPosition(),
+                // TODO playback speed
+                0
+        ).build());
+    }
+
+    /**
+     * Resume playback without changing the song.
+     */
+    public void resume() {
+        mediaPlayer.start();
+        mediaSession.setPlaybackState(playbackStateBuilder.setState(
+                PlaybackStateCompat.STATE_PLAYING,
                 mediaPlayer.getCurrentPosition(),
                 // TODO playback speed
                 0
@@ -182,4 +203,85 @@ public class PlayerService extends MediaBrowserServiceCompat {
         mediaPlayer.release();
         super.onDestroy();
     }
+
+    /**
+     * Callback class implementing the various methods for communicating between the
+     * {@link PlayerService} and a client.
+     */
+    private MediaSessionCompat.Callback playerCallback = new MediaSessionCompat.Callback() {
+
+        /**
+         * Play from a speciic media id.
+         * @param mediaId Id, String containing the index of the item in the list.
+         * @param extras
+         */
+        @Override
+        public void onPlayFromMediaId(String mediaId, Bundle extras) {
+            super.onPlayFromMediaId(mediaId, extras);
+
+            // Start (or restart) the Service.
+            startService(new Intent(PlayerService.this, PlayerService.class));
+
+            // Set the Media Session as active.
+            mediaSession.setActive(true);
+
+            // Play the song on the Service.
+            play(Integer.parseInt(mediaId));
+
+            // Put the Service in the foreground.
+            startForeground(
+                    NOTIFICATION_ID,
+                    getNotification()
+            );
+
+        }
+
+        /**
+         * The Media session received a play command.
+         * TODO : Audio Focus, noisy
+         */
+        @Override
+        public void onPlay() {
+            super.onPlay();
+
+            // Start (or restart) the Service.
+            startService(new Intent(PlayerService.this, PlayerService.class));
+
+            // Set the Media Session as active.
+            mediaSession.setActive(true);
+
+            // Play the song on the Service.
+            resume();
+
+            // Put the Service in the foreground.
+            startForeground(
+                    NOTIFICATION_ID,
+                    getNotification()
+            );
+        }
+
+        /**
+         * The Media session received a pause command.
+         * TODO noisy
+         */
+        @Override
+        public void onPause() {
+            super.onPause();
+            pause();
+            stopForeground(false);
+        }
+
+        /**
+         * The Media session received a stop command.
+         */
+        @Override
+        public void onStop() {
+            super.onStop();
+            stopPlayer();
+            mediaSession.setActive(false);
+            stopForeground(false);
+            stopSelf();
+        }
+
+    };
 }
