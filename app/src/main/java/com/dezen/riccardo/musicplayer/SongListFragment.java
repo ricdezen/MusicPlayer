@@ -27,8 +27,6 @@ public class SongListFragment extends Fragment {
     private ListView songsListView;
     private View rootView;
 
-    private int lastSong = 0;
-
     /**
      * Create a new Fragment attached to a client for the app's Service.
      *
@@ -72,12 +70,13 @@ public class SongListFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        songManager.getSongs().observe(
-                this,
-                songs -> songsListView.setAdapter(new CustomAdapter())
-        );
+        // First List setup.
         songsListView = rootView.findViewById(R.id.songs_listview);
         songsListView.setAdapter(new CustomAdapter());
+
+        // Observe changes in the Song list.
+        songManager.addObserver((obj, newVal) -> songsListView.setAdapter(new CustomAdapter()));
+        songManager.updateSongs();
     }
 
     /**
@@ -87,7 +86,6 @@ public class SongListFragment extends Fragment {
      * @param position The song to play on the Service.
      */
     private void play(int position) {
-        lastSong = position;
         playerClient.play(
                 // TODO see? Not pretty ffs.
                 //songManager.getSongs().getValue().get(position).getMetadata().getString
@@ -99,7 +97,7 @@ public class SongListFragment extends Fragment {
     private View getItemView(final int index) {
         View newView = getLayoutInflater().inflate(R.layout.song_listview_item, null);
         ((TextView) newView.findViewById(R.id.textView_song_title)).setText(
-                songManager.getSongs().getValue().get(index).getTitle()
+                songManager.get(index).getTitle()
         );
         newView.setOnClickListener(v -> play(index));
         return newView;
@@ -108,7 +106,7 @@ public class SongListFragment extends Fragment {
     private class CustomAdapter extends BaseAdapter {
         @Override
         public int getCount() {
-            return songManager.getSongs().getValue().size();
+            return songManager.size();
         }
 
         @Override

@@ -1,6 +1,7 @@
 package com.dezen.riccardo.musicplayer.song;
 
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 
@@ -12,6 +13,15 @@ import androidx.annotation.NonNull;
  * @author Riccardo De Zen.
  */
 public class Song {
+
+    public static final String[] FIELDS = {
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM,
+            // TODO Duration api level 29?
+            MediaStore.Audio.Media.DURATION
+    };
 
     private MediaMetadataCompat metadata;
     private MediaBrowserCompat.MediaItem mediaItem;

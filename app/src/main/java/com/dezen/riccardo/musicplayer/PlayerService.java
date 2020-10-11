@@ -137,12 +137,9 @@ public class PlayerService extends MediaBrowserServiceCompat {
      * Method to prepare a song to play. Resets the current mediaPlayer.
      */
     public void prepare(int position) {
-        List<Song> songs = songManager.getSongs().getValue();
-        if (songs == null) return;
-
         mediaPlayer.reset();
         try {
-            Song song = songs.get(position);
+            Song song = songManager.get(position);
             Log.d("PlayerService", "Playing song " + song.getTitle());
             mediaPlayer.setDataSource(this, song.getUri());
             mediaPlayer.prepare();

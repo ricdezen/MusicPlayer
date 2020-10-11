@@ -1,12 +1,13 @@
 package com.dezen.riccardo.musicplayer.song;
 
 import android.content.Context;
+import android.util.Log;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
+import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 
 /**
  * Class defining the shared data shared among the app.
@@ -14,13 +15,13 @@ import java.util.List;
  *
  * @author Riccardo De Zen.
  */
-public class SongManager {
+public class SongManager extends Observable implements SongLoader.Listener {
     /**
      * Only available instance of this class.
      */
     private static SongManager activeInstance;
 
-    private MutableLiveData<List<Song>> songList;
+    private List<Song> songList;
     private SongLoader songLoader;
 
     /**
@@ -29,8 +30,10 @@ public class SongManager {
      * @param context The calling context, used to retrieve an instance of {@link SongLoader}.
      */
     private SongManager(Context context) {
-        songList = new MutableLiveData<>(new ArrayList<>());
         songLoader = SongLoader.getInstance(context);
+
+        // The list of songs starts as empty.
+        songList = new ArrayList<>();
     }
 
     /**
@@ -41,26 +44,57 @@ public class SongManager {
      */
     public static SongManager getInstance(Context context) {
         if (activeInstance == null)
-            activeInstance = new SongManager(context);
+            activeInstance = new SongManager(context.getApplicationContext());
         return activeInstance;
     }
 
     /**
-     * Method to retrieve the list of songs, and load it if its empty.
+     * Method to retrieve the list of songs. If the List is empty it will also attempt to load it
+     * in the background.
      *
-     * @return A LiveData containing the song list and starts loading the songs. Whenever its
-     * values are updated, a whole new list is created. But the {@link LiveData} stays the same.
+     * @return A List of all the songs that are currently loaded.
      */
-    public LiveData<List<Song>> getSongs() {
-        if (songList.getValue() == null || songList.getValue().size() == 0)
+    public List<Song> getSongs() {
+        if (songList.isEmpty())
             updateSongs();
         return songList;
     }
 
     /**
-     * Method used to update the song list.
+     * @param index Index in the song list.
+     * @return The item in the song list for the given index.
+     * @throws IndexOutOfBoundsException If the index is not valid (not in 0 to size-1).
+     */
+    @NonNull
+    public Song get(int index) throws IndexOutOfBoundsException {
+        return songList.get(index);
+    }
+
+    /**
+     * @return The size of the List of Songs.
+     */
+    public int size() {
+        return songList.size();
+    }
+
+    /**
+     * Method used to update the song list. A new List will be created and used when replacing
+     * the current one. Observe this Object to be notified of these updates.
      */
     public void updateSongs() {
-        songLoader.loadSongList(songList);
+        songLoader.loadSongList(this);
+    }
+
+    /**
+     * Method called when the songs get loaded. Replaces the list of songs with the new one and
+     * notifies the observers.
+     *
+     * @param newList The new list of songs. May or may not be equal to the previous one.
+     */
+    @Override
+    public void onLoaded(List<Song> newList) {
+        songList = newList;
+        setChanged();
+        notifyObservers(songList);
     }
 }

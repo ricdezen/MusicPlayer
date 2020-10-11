@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.MutableLiveData;
 
 import java.util.List;
 
@@ -16,17 +15,6 @@ import java.util.List;
  * @author Riccardo De Zen.
  */
 public class SongLoader {
-    /**
-     * Fields extracted from the {@link android.content.ContentResolver}.
-     */
-    public static final String[] PROJECTION = {
-            MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ALBUM,
-            // TODO Duration api level 29?
-            MediaStore.Audio.Media.DURATION,
-    };
 
     /**
      * The only available instance of the class.
@@ -68,7 +56,7 @@ public class SongLoader {
     private Cursor getCursor() {
         return contentResolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                PROJECTION,
+                Song.FIELDS,
                 null,
                 null,
                 MediaStore.Audio.Media.TITLE
@@ -78,10 +66,22 @@ public class SongLoader {
     /**
      * Method used to start a background loading operation.
      *
-     * @param container The {@link MutableLiveData} that should contain the result of the loading.
+     * @param listener A Listener that will receive the result of the loading.
      */
-    public void loadSongList(@NonNull MutableLiveData<List<Song>> container) {
-        new SongLoadTask(getCursor(), container).execute();
+    public void loadSongList(@NonNull Listener listener) {
+        new SongLoadTask(getCursor(), listener).execute();
+    }
+
+    /**
+     * Interface used to define callbacks for {@link SongLoader#loadSongList(Listener)}.
+     */
+    public interface Listener {
+        /**
+         * Method called when the songs have been loaded.
+         *
+         * @param newList The new list of songs. May or may not be equal to the previous one.
+         */
+        void onLoaded(List<Song> newList);
     }
 
 }
