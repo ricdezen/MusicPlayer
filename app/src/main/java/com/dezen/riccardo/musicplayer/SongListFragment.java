@@ -32,7 +32,7 @@ public class SongListFragment extends Fragment {
     private View rootView;
 
     // When songs are updated, update List.
-    private Observer songObserver = (obj, newVal) -> new Handler(Looper.getMainLooper()).post(
+    private Observer songObserver = (obj, newVal) -> onMainThread(
             () -> songsListView.setAdapter(new CustomAdapter())
     );
 
@@ -105,6 +105,15 @@ public class SongListFragment extends Fragment {
         // When a view is clicked play the corresponding song.
         newView.setOnClickListener(v -> playerClient.play(songManager.get(index)));
         return newView;
+    }
+
+    /**
+     * Run a Runnable on the main UI thread.
+     *
+     * @param runnable Any Runnable.
+     */
+    private void onMainThread(Runnable runnable) {
+        new Handler(Looper.getMainLooper()).post(runnable);
     }
 
     private class CustomAdapter extends BaseAdapter {

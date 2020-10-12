@@ -93,6 +93,48 @@ public class SongManager extends Observable implements SongLoader.Listener {
     }
 
     /**
+     * Find the Song that comes after the given one.
+     *
+     * @param id Id for the Song.
+     * @return The next Song, or null if the Song list is empty or the Song can't be found.
+     */
+    @Nullable
+    public synchronized Song next(String id) {
+        // Empty list -> null.
+        if (songList.isEmpty())
+            return null;
+
+        // Song not found -> null.
+        Integer index = indexMap.get(id);
+        if (index == null)
+            return null;
+
+        int nextIndex = (index + 1) % songList.size();
+        return songList.get(nextIndex);
+    }
+
+    /**
+     * Find the Song that comes before the given one.
+     *
+     * @param id Id for the Song.
+     * @return The previous Song, or null if the Song list is empty or the Song can't be found.
+     */
+    @Nullable
+    public synchronized Song previous(String id) {
+        // Empty list -> null.
+        if (songList.isEmpty())
+            return null;
+
+        // Song not found -> null.
+        Integer index = indexMap.get(id);
+        if (index == null)
+            return null;
+
+        int nextIndex = (index - 1 + songList.size()) % songList.size();
+        return songList.get(nextIndex);
+    }
+
+    /**
      * @return The size of the List of Songs.
      */
     public synchronized int size() {

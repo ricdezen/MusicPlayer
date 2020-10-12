@@ -45,6 +45,7 @@ public class PlayerService extends MediaBrowserServiceCompat {
     private PlaybackStateCompat.Builder playbackStateBuilder;
     private SongManager songManager;
     private MediaPlayer mediaPlayer;
+    private String currentSongId;
 
     /**
      * When created the Service makes sure the notification channel is enabled if needed.
@@ -131,6 +132,7 @@ public class PlayerService extends MediaBrowserServiceCompat {
     public void play(Song song) {
         if (mediaPlayer.isPlaying())
             mediaPlayer.stop();
+        currentSongId = song.getId();
         prepare(song);
         resume();
     }
@@ -293,5 +295,38 @@ public class PlayerService extends MediaBrowserServiceCompat {
             stopSelf();
         }
 
+        /**
+         * Skip to the next Song.
+         */
+        @Override
+        public void onSkipToNext() {
+            super.onSkipToNext();
+
+            if (currentSongId == null)
+                return;
+
+            Song song = songManager.next(currentSongId);
+            if (song == null)
+                return;
+
+            onPlayFromMediaId(song.getId(), null);
+        }
+
+        /**
+         * Skip to the previous Song.
+         */
+        @Override
+        public void onSkipToPrevious() {
+            super.onSkipToPrevious();
+
+            if (currentSongId == null)
+                return;
+
+            Song song = songManager.previous(currentSongId);
+            if (song == null)
+                return;
+
+            onPlayFromMediaId(song.getId(), null);
+        }
     };
 }
