@@ -2,6 +2,8 @@ package com.dezen.riccardo.musicplayer;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,7 +32,9 @@ public class SongListFragment extends Fragment {
     private View rootView;
 
     // When songs are updated, update List.
-    private Observer songObserver = (obj, newVal) -> songsListView.setAdapter(new CustomAdapter());
+    private Observer songObserver = (obj, newVal) -> new Handler(Looper.getMainLooper()).post(
+            () -> songsListView.setAdapter(new CustomAdapter())
+    );
 
     /**
      * Create a new Fragment attached to a client for the app's Service.

@@ -40,6 +40,11 @@ public class Song {
     }
 
     @NonNull
+    public String getId() {
+        return metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+    }
+
+    @NonNull
     public MediaMetadataCompat getMetadata() {
         return metadata;
     }

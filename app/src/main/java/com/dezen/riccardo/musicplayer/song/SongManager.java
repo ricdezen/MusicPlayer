@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Observable;
 
@@ -23,6 +24,8 @@ public class SongManager extends Observable implements SongLoader.Listener {
     private static SongManager activeInstance;
 
     private List<Song> songList;
+    private HashMap<String, Song> idMap;
+    private HashMap<String, Integer> indexMap;
     private SongLoader songLoader;
 
     /**
@@ -35,6 +38,8 @@ public class SongManager extends Observable implements SongLoader.Listener {
 
         // The list of songs starts as empty.
         songList = new ArrayList<>();
+        indexMap = new HashMap<>();
+        idMap = new HashMap<>();
     }
 
     /**
@@ -56,7 +61,7 @@ public class SongManager extends Observable implements SongLoader.Listener {
      * @return A List of all the songs that are currently loaded.
      */
     @NonNull
-    public List<Song> getSongs() {
+    public synchronized List<Song> getSongs() {
         if (songList.isEmpty())
             updateSongs();
         return songList;
@@ -68,7 +73,7 @@ public class SongManager extends Observable implements SongLoader.Listener {
      * @throws IndexOutOfBoundsException If the index is not valid (not in 0 to size-1).
      */
     @NonNull
-    public Song get(int index) throws IndexOutOfBoundsException {
+    public synchronized Song get(int index) throws IndexOutOfBoundsException {
         return songList.get(index);
     }
 
@@ -80,7 +85,7 @@ public class SongManager extends Observable implements SongLoader.Listener {
      * @return The Song whose id matches the String, or null if not present.
      */
     @Nullable
-    public Song get(String id) {
+    public synchronized Song get(String id) {
         for (Song song : songList)
             if (song.getMetadata().getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID).equals(id))
                 return song;
@@ -90,7 +95,7 @@ public class SongManager extends Observable implements SongLoader.Listener {
     /**
      * @return The size of the List of Songs.
      */
-    public int size() {
+    public synchronized int size() {
         return songList.size();
     }
 
@@ -110,8 +115,17 @@ public class SongManager extends Observable implements SongLoader.Listener {
      */
     @Override
     public void onLoaded(@NonNull List<Song> newList) {
-        songList = newList;
-        setChanged();
+        synchronized (this) {
+            songList = newList;
+            // Build the maps for ids and indexes.
+            idMap.clear();
+            for (Song song : songList)
+                idMap.put(song.getId(), song);
+            indexMap.clear();
+            for (int i = 0; i < songList.size(); i++)
+                indexMap.put(songList.get(i).getId(), i);
+            setChanged();
+        }
         notifyObservers(songList);
     }
 }

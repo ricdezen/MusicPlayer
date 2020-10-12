@@ -45,7 +45,6 @@ public class PlayerService extends MediaBrowserServiceCompat {
     private PlaybackStateCompat.Builder playbackStateBuilder;
     private SongManager songManager;
     private MediaPlayer mediaPlayer;
-    private int currentSong = 0;
 
     /**
      * When created the Service makes sure the notification channel is enabled if needed.

@@ -69,20 +69,7 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
             publishProgress(songs.size() / count * 100);
         } while (cursor.moveToNext());
 
-        return true;
-    }
-
-    /**
-     * If the result was False do nothing. Otherwise notify the Listener on main thread.
-     *
-     * @param result Result of the task.
-     */
-    @Override
-    protected void onPostExecute(Boolean result) {
-        super.onPostExecute(result);
-        if (!result)
-            return;
-
         listener.onLoaded(songs);
+        return true;
     }
 }
