@@ -150,38 +150,33 @@ public class NotificationHelper {
                 .setContentIntent(controller.getSessionActivity())
 
                 // Icon.
-                .setSmallIcon(R.drawable.paperclip_black)
+                .setSmallIcon(R.drawable.song_icon)
 
                 // TODO buttons, metadata and such.
                 // Make the transport controls visible on the lock screen.
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 // Add a Play/Pause button
                 .addAction(R.drawable.previous_icon,
-                        "Prev",
+                        resources.getString(R.string.previous),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
                                 service,
                                 PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
                         ))
                 .addAction(
-                        toggleIcon, service.getString(R.string.pause),
+                        toggleIcon,
+                        resources.getString(R.string.pause),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
                                 service,
                                 PlaybackStateCompat.ACTION_PLAY_PAUSE
                         ))
                 .addAction(R.drawable.next_icon,
-                        "Next",
+                        resources.getString(R.string.next),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
                                 service,
                                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT
                         ))
                 .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                         .setMediaSession(service.getMediaSession().getSessionToken())
-
-                        // Add a cancel button
-                        .setShowCancelButton(true)
-                        .setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(
-                                service,
-                                PlaybackStateCompat.ACTION_STOP))
                 );
 
 

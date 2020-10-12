@@ -3,6 +3,8 @@
 
     <!-- -->
     <string name="pause">Pause</string>
+    <string name="previous">Previous</string>
+    <string name="next">Next</string>
 
     <!-- Notifications -->
     <string name="notification_channel_id">music-player-foreground</string>
