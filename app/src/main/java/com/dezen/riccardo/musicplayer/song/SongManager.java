@@ -1,9 +1,10 @@
 package com.dezen.riccardo.musicplayer.song;
 
 import android.content.Context;
-import android.util.Log;
+import android.support.v4.media.MediaMetadataCompat;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +55,7 @@ public class SongManager extends Observable implements SongLoader.Listener {
      *
      * @return A List of all the songs that are currently loaded.
      */
+    @NonNull
     public List<Song> getSongs() {
         if (songList.isEmpty())
             updateSongs();
@@ -68,6 +70,21 @@ public class SongManager extends Observable implements SongLoader.Listener {
     @NonNull
     public Song get(int index) throws IndexOutOfBoundsException {
         return songList.get(index);
+    }
+
+    /**
+     * Retrieve a Song based on its id instead of its index.
+     * TODO this is a naive linear search. Use an HashMap..
+     *
+     * @param id The String id for the Song.
+     * @return The Song whose id matches the String, or null if not present.
+     */
+    @Nullable
+    public Song get(String id) {
+        for (Song song : songList)
+            if (song.getMetadata().getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID).equals(id))
+                return song;
+        return null;
     }
 
     /**
@@ -92,7 +109,7 @@ public class SongManager extends Observable implements SongLoader.Listener {
      * @param newList The new list of songs. May or may not be equal to the previous one.
      */
     @Override
-    public void onLoaded(List<Song> newList) {
+    public void onLoaded(@NonNull List<Song> newList) {
         songList = newList;
         setChanged();
         notifyObservers(songList);

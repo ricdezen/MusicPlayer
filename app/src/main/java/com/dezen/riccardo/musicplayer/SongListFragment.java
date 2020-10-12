@@ -93,27 +93,13 @@ public class SongListFragment extends Fragment {
         songManager.deleteObserver(songObserver);
     }
 
-    /**
-     * Play the selected Song.
-     * TODO position.
-     *
-     * @param position The song to play on the Service.
-     */
-    private void play(int position) {
-        playerClient.play(
-                // TODO see? Not pretty ffs.
-                //songManager.getSongs().getValue().get(position).getMetadata().getString
-                // (MediaMetadataCompat.METADATA_KEY_MEDIA_ID)
-                String.valueOf(position)
-        );
-    }
-
     private View getItemView(final int index) {
         View newView = getLayoutInflater().inflate(R.layout.song_listview_item, null);
         ((TextView) newView.findViewById(R.id.textView_song_title)).setText(
                 songManager.get(index).getTitle()
         );
-        newView.setOnClickListener(v -> play(index));
+        // When a view is clicked play the corresponding song.
+        newView.setOnClickListener(v -> playerClient.play(songManager.get(index)));
         return newView;
     }
 

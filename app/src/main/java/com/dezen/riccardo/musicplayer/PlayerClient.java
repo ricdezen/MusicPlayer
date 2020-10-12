@@ -3,12 +3,15 @@ package com.dezen.riccardo.musicplayer;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+
+import com.dezen.riccardo.musicplayer.song.Song;
 
 /**
  * Class used to simplify MediaBrowserClient usage. Communicates with a {@link PlayerService}. It
@@ -82,13 +85,22 @@ public class PlayerClient {
     /**
      * Start playing a song on the Service. Won't do anything if the Service has not been bound yet.
      *
-     * @param id String id for the Song to play. Expected to be its position in the global list.
+     * @param id String id for the Song to play.
      */
     public void play(String id) {
         if (mediaController == null)
             return;
 
         mediaController.getTransportControls().playFromMediaId(id, null);
+    }
+
+    /**
+     * Play a Song object instead of from an id.
+     *
+     * @param song Song to play.
+     */
+    public void play(Song song) {
+        play(song.getMetadata().getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID));
     }
 
     /**

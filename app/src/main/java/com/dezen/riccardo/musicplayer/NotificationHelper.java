@@ -14,9 +14,8 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.media.session.MediaButtonReceiver;
-
-import java.util.Objects;
 
 /**
  * Class dedicated to ensuring the Notification channel is set up (if necessary) and building the
@@ -31,7 +30,7 @@ public class NotificationHelper {
     private static NotificationHelper activeInstance;
 
     @NonNull
-    private NotificationManager notificationManager;
+    private NotificationManagerCompat notificationManager;
     private Resources resources;
 
     /**
@@ -45,9 +44,7 @@ public class NotificationHelper {
     private NotificationHelper(@NonNull Context context) {
         this.resources = context.getResources();
         // Should always be non null.
-        this.notificationManager = (NotificationManager) Objects.requireNonNull(
-                context.getSystemService(Context.NOTIFICATION_SERVICE)
-        );
+        this.notificationManager = NotificationManagerCompat.from(context);
     }
 
     /**
@@ -100,15 +97,30 @@ public class NotificationHelper {
     }
 
     /**
+     * Same as {@link NotificationManagerCompat#notify(int, Notification)}.
+     *
+     * @param id           Id for the Notification.
+     * @param notification Notification to post.
+     */
+    public void notify(int id, Notification notification) {
+        notificationManager.notify(id, notification);
+    }
+
+    /**
      * Method used to create the notification for the foreground Service.
      * The {@link Notification} will be created without an associated channel if the api level is
      * < 26.
      * If the channel is not available, the default one is used.
+     * <p>
+     * The Notification will try to retrieve the MediaSession's metadata, so it will throw a
+     * NullPointerException if the metadata is null. Update its metadata before calling this.
+     * The Notification will have a play/pause button and skip/previous buttons.
      *
      * @param service The calling Service.
+     * @throws NullPointerException If the MediaSession has no associated Metadata.
      */
     @NonNull
-    public Notification getServiceNotification(@NonNull PlayerService service) {
+    public Notification getPlayerServiceNotification(@NonNull PlayerService service) throws NullPointerException {
         NotificationCompat.Builder builder;
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
@@ -120,30 +132,38 @@ public class NotificationHelper {
         MediaMetadataCompat metadata = controller.getMetadata();
         MediaDescriptionCompat description = metadata.getDescription();
 
+        // Icon depending on playback state.
+        int toggleIcon =
+                (controller.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) ?
+                        R.drawable.pause_icon : R.drawable.play_icon;
+
         builder
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+
                 // Add the metadata for the currently playing track.
                 .setContentTitle(description.getTitle())
                 .setContentText(description.getSubtitle())
                 .setSubText(description.getDescription())
                 .setLargeIcon(description.getIconBitmap())
+
                 // Enable launching the player by clicking the notification.
                 .setContentIntent(controller.getSessionActivity())
+
+                // Icon.
                 .setSmallIcon(R.drawable.paperclip_black)
-                .setColor(service.getResources().getColor(R.color.colorPrimary))
+
                 // TODO buttons, metadata and such.
                 // Make the transport controls visible on the lock screen.
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                // Add a pause button
+                // Add a Play/Pause button
                 .addAction(
-                        R.drawable.play_arrow, service.getString(R.string.pause),
+                        toggleIcon, service.getString(R.string.pause),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
                                 service,
                                 PlaybackStateCompat.ACTION_PLAY_PAUSE
                         ))
                 .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                         .setMediaSession(service.getMediaSession().getSessionToken())
-                        .setShowActionsInCompactView(0)
 
                         // Add a cancel button
                         .setShowCancelButton(true)

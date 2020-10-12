@@ -33,7 +33,14 @@ public class PlayerService extends MediaBrowserServiceCompat {
     public static final int NOTIFICATION_ID = 1234;
 
     private static final int ACTIVITY_PENDING_INTENT_CODE = 4321;
+    private static final long[] SUPPORTED_ACTIONS = new long[]{
+            PlaybackStateCompat.ACTION_PLAY_PAUSE,
+            PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID,
+            PlaybackStateCompat.ACTION_SKIP_TO_NEXT,
+            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+    };
 
+    private NotificationHelper notificationHelper;
     private MediaSessionCompat mediaSession;
     private PlaybackStateCompat.Builder playbackStateBuilder;
     private SongManager songManager;
@@ -51,14 +58,13 @@ public class PlayerService extends MediaBrowserServiceCompat {
         mediaPlayer = new MediaPlayer();
 
         // Ensure notification channel is created.
-        NotificationHelper.getInstance(this).createChannelIfNeeded();
+        notificationHelper = NotificationHelper.getInstance(this);
+        notificationHelper.createChannelIfNeeded();
 
         // Setup PlaybackStateBuilder.
-        long actions =
-                PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID;
         playbackStateBuilder = new PlaybackStateCompat.Builder()
                 .setState(PlaybackStateCompat.STATE_NONE, 0, 0)
-                .setActions(actions);
+                .setActions(Utils.bitOR(SUPPORTED_ACTIONS));
 
         // Create MediaSession.
         mediaSession = new MediaSessionCompat(this, LOG_TAG);
@@ -104,14 +110,11 @@ public class PlayerService extends MediaBrowserServiceCompat {
 
     /**
      * Method to retrieve the Notification for this Service.
-     * Must be called after {@link PlayerService#play(int)}. Otherwise the MediaSession will have
-     * null
-     * Metadata.
      *
      * @return The {@link Notification} for this Service, built through {@link NotificationHelper}.
      */
     public Notification getNotification() {
-        return NotificationHelper.getInstance(this).getServiceNotification(this);
+        return notificationHelper.getPlayerServiceNotification(this);
     }
 
     /**
@@ -124,22 +127,23 @@ public class PlayerService extends MediaBrowserServiceCompat {
     /**
      * Prepare new song and play.
      *
-     * @param position
+     * @param song The song to play.
      */
-    public void play(int position) {
+    public void play(Song song) {
         if (mediaPlayer.isPlaying())
             mediaPlayer.stop();
-        prepare(position);
+        prepare(song);
         resume();
     }
 
     /**
      * Method to prepare a song to play. Resets the current mediaPlayer.
+     *
+     * @param song The song for which to prepare playback.
      */
-    public void prepare(int position) {
+    public void prepare(Song song) {
         mediaPlayer.reset();
         try {
-            Song song = songManager.get(position);
             Log.d("PlayerService", "Playing song " + song.getTitle());
             mediaPlayer.setDataSource(this, song.getUri());
             mediaPlayer.prepare();
@@ -208,13 +212,20 @@ public class PlayerService extends MediaBrowserServiceCompat {
     private MediaSessionCompat.Callback playerCallback = new MediaSessionCompat.Callback() {
 
         /**
-         * Play from a speciic media id.
+         * Play from a specific media id. If the id is not found in the SongManager class, the
+         * method returns.
+         *
          * @param mediaId Id, String containing the index of the item in the list.
-         * @param extras
+         * @param extras Ignored.
          */
         @Override
         public void onPlayFromMediaId(String mediaId, Bundle extras) {
             super.onPlayFromMediaId(mediaId, extras);
+
+            // Return if song is not found.
+            Song song = songManager.get(mediaId);
+            if (song == null)
+                return;
 
             // Start (or restart) the Service.
             startService(new Intent(PlayerService.this, PlayerService.class));
@@ -223,7 +234,7 @@ public class PlayerService extends MediaBrowserServiceCompat {
             mediaSession.setActive(true);
 
             // Play the song on the Service.
-            play(Integer.parseInt(mediaId));
+            play(song);
 
             // Put the Service in the foreground.
             startForeground(
@@ -265,7 +276,10 @@ public class PlayerService extends MediaBrowserServiceCompat {
         public void onPause() {
             super.onPause();
             pause();
+            // Stop being in the foreground.
             stopForeground(false);
+            // Update the notification.
+            notificationHelper.notify(NOTIFICATION_ID, getNotification());
         }
 
         /**

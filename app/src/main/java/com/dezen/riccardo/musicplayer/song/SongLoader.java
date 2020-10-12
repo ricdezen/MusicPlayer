@@ -81,7 +81,7 @@ public class SongLoader {
          *
          * @param newList The new list of songs. May or may not be equal to the previous one.
          */
-        void onLoaded(List<Song> newList);
+        void onLoaded(@NonNull List<Song> newList);
     }
 
 }
