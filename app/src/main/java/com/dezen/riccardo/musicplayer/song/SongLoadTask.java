@@ -1,9 +1,7 @@
 package com.dezen.riccardo.musicplayer.song;
 
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.database.Cursor;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
@@ -22,25 +20,20 @@ import java.util.List;
  */
 class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
 
-    private MediaMetadataRetriever metaRetriever = new MediaMetadataRetriever();
     private List<Song> songs = new ArrayList<>();
-    private ContentResolver contentResolver;
     private SongLoader.Listener listener;
     private Cursor cursor;
 
     /**
      * Constructor.
      *
-     * @param cursor          The cursor that should load the songs.
-     * @param listener        The listener that will receive the result.
-     * @param contentResolver The ContentResolver, used to access some of the data.
+     * @param cursor   The cursor that should load the songs.
+     * @param listener The listener that will receive the result.
      */
     public SongLoadTask(@NonNull Cursor cursor,
-                        @NonNull SongLoader.Listener listener,
-                        @NonNull ContentResolver contentResolver) {
+                        @NonNull SongLoader.Listener listener) {
         this.cursor = cursor;
         this.listener = listener;
-        this.contentResolver = contentResolver;
     }
 
     /**

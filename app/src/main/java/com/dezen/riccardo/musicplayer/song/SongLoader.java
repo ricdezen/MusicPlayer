@@ -70,7 +70,7 @@ public class SongLoader {
      * @param listener A Listener that will receive the result of the loading.
      */
     public void loadSongList(@NonNull Listener listener) {
-        new SongLoadTask(getCursor(), listener, contentResolver).execute();
+        new SongLoadTask(getCursor(), listener).execute();
     }
 
     /**
