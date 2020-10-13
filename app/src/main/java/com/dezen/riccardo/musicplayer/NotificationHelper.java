@@ -138,7 +138,7 @@ public class NotificationHelper {
                         R.drawable.pause_icon : R.drawable.play_icon;
 
         builder
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
                 // Add the metadata for the currently playing track.
                 .setContentTitle(description.getTitle())
@@ -152,7 +152,6 @@ public class NotificationHelper {
                 // Icon.
                 .setSmallIcon(R.drawable.song_icon)
 
-                // TODO buttons, metadata and such.
                 // Make the transport controls visible on the lock screen.
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 // Add a Play/Pause button

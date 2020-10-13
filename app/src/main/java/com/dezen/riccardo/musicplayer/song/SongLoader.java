@@ -51,12 +51,13 @@ public class SongLoader {
     }
 
     /**
+     * TODO temporary null projection. Inefficient.
      * Method to retrieve an updated cursor from the {@link android.content.ContentResolver}.
      */
     private Cursor getCursor() {
         return contentResolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                Song.FIELDS,
+                null,
                 null,
                 null,
                 MediaStore.Audio.Media.TITLE

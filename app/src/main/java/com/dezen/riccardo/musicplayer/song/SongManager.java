@@ -1,7 +1,6 @@
 package com.dezen.riccardo.musicplayer.song;
 
 import android.content.Context;
-import android.support.v4.media.MediaMetadataCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,7 +12,6 @@ import java.util.Observable;
 
 /**
  * Class defining the shared data shared among the app.
- * TODO Make Observable to wrap songList's observation. This way getSongs can just return a List.
  *
  * @author Riccardo De Zen.
  */
@@ -79,17 +77,13 @@ public class SongManager extends Observable implements SongLoader.Listener {
 
     /**
      * Retrieve a Song based on its id instead of its index.
-     * TODO this is a naive linear search. Use an HashMap..
      *
      * @param id The String id for the Song.
      * @return The Song whose id matches the String, or null if not present.
      */
     @Nullable
     public synchronized Song get(String id) {
-        for (Song song : songList)
-            if (song.getMetadata().getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID).equals(id))
-                return song;
-        return null;
+        return idMap.get(id);
     }
 
     /**
