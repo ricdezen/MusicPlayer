@@ -144,7 +144,7 @@ public class NotificationHelper {
                 .setContentTitle(description.getTitle())
                 .setContentText(description.getSubtitle())
                 .setSubText(description.getDescription())
-                .setLargeIcon(description.getIconBitmap())
+                .setLargeIcon(Utils.getBitmap(service, metadata))
 
                 // Enable launching the player by clicking the notification.
                 .setContentIntent(controller.getSessionActivity())

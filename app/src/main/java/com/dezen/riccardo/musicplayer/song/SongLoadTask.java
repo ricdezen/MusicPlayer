@@ -1,11 +1,15 @@
 package com.dezen.riccardo.musicplayer.song;
 
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.database.Cursor;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.support.v4.media.MediaMetadataCompat;
+
+import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,19 +22,25 @@ import java.util.List;
  */
 class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
 
+    private MediaMetadataRetriever metaRetriever = new MediaMetadataRetriever();
     private List<Song> songs = new ArrayList<>();
+    private ContentResolver contentResolver;
     private SongLoader.Listener listener;
     private Cursor cursor;
 
     /**
      * Constructor.
      *
-     * @param cursor   The cursor that should load the songs.
-     * @param listener The listener that will receive the result.
+     * @param cursor          The cursor that should load the songs.
+     * @param listener        The listener that will receive the result.
+     * @param contentResolver The ContentResolver, used to access some of the data.
      */
-    public SongLoadTask(Cursor cursor, SongLoader.Listener listener) {
+    public SongLoadTask(@NonNull Cursor cursor,
+                        @NonNull SongLoader.Listener listener,
+                        @NonNull ContentResolver contentResolver) {
         this.cursor = cursor;
         this.listener = listener;
+        this.contentResolver = contentResolver;
     }
 
     /**
@@ -63,6 +73,7 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
                     Long.parseLong(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)))
             );
             builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, String.valueOf(uri));
+            // Neither is the album art. But that is retrieved when generating the notification.
 
             songs.add(new Song(builder.build()));
             publishProgress(songs.size() / count * 100);

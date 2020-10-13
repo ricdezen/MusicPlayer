@@ -29,10 +29,12 @@ public class Song implements Filterable<String> {
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.ARTIST
+            MediaStore.Audio.Media.ARTIST,
     };
-    public static Map<String, String> MEDIA_TO_META = Utils.toMap(MEDIA_COLUMNS, META_COLUMNS);
-    public static Map<String, String> META_TO_MEDIA = Utils.toMap(META_COLUMNS, MEDIA_COLUMNS);
+    public static final Map<String, String> MEDIA_TO_META = Utils.toMap(MEDIA_COLUMNS,
+            META_COLUMNS);
+    public static final Map<String, String> META_TO_MEDIA = Utils.toMap(META_COLUMNS,
+            MEDIA_COLUMNS);
 
     private final MediaMetadataCompat metadata;
     private final MediaBrowserCompat.MediaItem mediaItem;
