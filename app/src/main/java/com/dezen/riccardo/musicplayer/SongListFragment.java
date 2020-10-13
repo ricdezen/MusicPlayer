@@ -102,6 +102,12 @@ public class SongListFragment extends Fragment {
         ((TextView) newView.findViewById(R.id.textView_song_title)).setText(
                 songManager.get(index).getTitle()
         );
+        ((TextView) newView.findViewById(R.id.textView_song_album)).setText(
+                songManager.get(index).getAlbum()
+        );
+        ((TextView) newView.findViewById(R.id.textView_song_artist)).setText(
+                songManager.get(index).getArtist()
+        );
         // When a view is clicked play the corresponding song.
         newView.setOnClickListener(v -> playerClient.play(songManager.get(index)));
         return newView;
