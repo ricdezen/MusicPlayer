@@ -19,6 +19,7 @@ import androidx.core.content.res.ResourcesCompat;
 
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +27,9 @@ public class Utils {
 
     private static MediaMetadataRetriever retriever = new MediaMetadataRetriever();
     private static int defaultImage = R.drawable.song_icon;
+
+    private static Drawable defaultDrawable;
+    private static Bitmap defaultBitmap;
 
     /**
      * Retrieve a Drawable for a certain metadata. If the metadata is null, retrieve a default
@@ -36,9 +40,9 @@ public class Utils {
      * @param resources       App resources.
      * @return The Bitmap for the given song, or a default image.
      */
-    public static Drawable getMediaDrawable(@Nullable MediaMetadataCompat metadata,
-                                            @NonNull ContentResolver contentResolver,
-                                            @NonNull Resources resources) {
+    public static synchronized Drawable getMediaDrawable(@Nullable MediaMetadataCompat metadata,
+                                                         @NonNull ContentResolver contentResolver,
+                                                         @NonNull Resources resources) {
         if (metadata == null)
             return getDefaultMediaDrawable(resources);
 
@@ -53,14 +57,15 @@ public class Utils {
             FileDescriptor file = asset.getFileDescriptor();
             retriever.setDataSource(file);
             byte[] rawBytes = retriever.getEmbeddedPicture();
+            asset.close();
 
             // If no embedded picture is found, the array is null.
             if (rawBytes == null)
                 throw new NullPointerException();
+
             Bitmap bitmap = BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.length);
             return new BitmapDrawable(resources, bitmap);
-        } catch (FileNotFoundException | NullPointerException e) {
-            e.printStackTrace();
+        } catch (IOException | NullPointerException e) {
             // No image found for whatever reason, fall back to a default.
             return getDefaultMediaDrawable(resources);
         }
@@ -74,8 +79,8 @@ public class Utils {
      * @param context  The context.
      * @return The Bitmap for the given song, or a default image.
      */
-    public static Drawable getMediaDrawable(@Nullable MediaMetadataCompat metadata,
-                                            @NonNull Context context) {
+    public static synchronized Drawable getMediaDrawable(@Nullable MediaMetadataCompat metadata,
+                                                         @NonNull Context context) {
         return getMediaDrawable(metadata, context.getContentResolver(), context.getResources());
     }
 
@@ -88,9 +93,9 @@ public class Utils {
      * @param resources       App resources.
      * @return The Bitmap for the given song, or a default image.
      */
-    public static Bitmap getMediaBitmap(@Nullable MediaMetadataCompat metadata,
-                                        @NonNull ContentResolver contentResolver,
-                                        @NonNull Resources resources) {
+    public static synchronized Bitmap getMediaBitmap(@Nullable MediaMetadataCompat metadata,
+                                                     @NonNull ContentResolver contentResolver,
+                                                     @NonNull Resources resources) {
         if (metadata == null)
             return getDefaultMediaBitmap(resources);
 
@@ -105,14 +110,15 @@ public class Utils {
             FileDescriptor file = asset.getFileDescriptor();
             retriever.setDataSource(file);
             byte[] rawBytes = retriever.getEmbeddedPicture();
+            asset.close();
 
             // If no embedded picture is found, the array is null.
             if (rawBytes == null)
                 throw new NullPointerException();
+
             return BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.length);
-        } catch (FileNotFoundException | NullPointerException e) {
-            e.printStackTrace();
-            // No image found for whatever reason, fall back to a default.
+        } catch (NullPointerException | IOException e) {
+            // Could not find file.
             return getDefaultMediaBitmap(resources);
         }
     }
@@ -125,18 +131,9 @@ public class Utils {
      * @param context  The context.
      * @return The Bitmap for the given song, or a default image.
      */
-    public static Bitmap getMediaBitmap(@Nullable MediaMetadataCompat metadata,
-                                        @NonNull Context context) {
+    public static synchronized Bitmap getMediaBitmap(@Nullable MediaMetadataCompat metadata,
+                                                     @NonNull Context context) {
         return getMediaBitmap(metadata, context.getContentResolver(), context.getResources());
-    }
-
-    /**
-     * Change the default song drawable's id.
-     *
-     * @param defaultImage The resource id of the desired default drawable.
-     */
-    public static void setDefaultImage(int defaultImage) {
-        Utils.defaultImage = defaultImage;
     }
 
     /**
@@ -145,8 +142,10 @@ public class Utils {
      * @param resources The app resources.
      * @return The default Drawable.
      */
-    private static Drawable getDefaultMediaDrawable(@NonNull Resources resources) {
-        return ResourcesCompat.getDrawable(resources, defaultImage, null);
+    public static Drawable getDefaultMediaDrawable(@NonNull Resources resources) {
+        if (defaultDrawable == null)
+            defaultDrawable = ResourcesCompat.getDrawable(resources, defaultImage, null);
+        return defaultDrawable;
     }
 
     /**
@@ -155,17 +154,20 @@ public class Utils {
      * @param resources The app resources.
      * @return The default Bitmap.
      */
-    private static Bitmap getDefaultMediaBitmap(@NonNull Resources resources) {
-        Drawable drawable = getDefaultMediaDrawable(resources);
-        Bitmap bitmap = Bitmap.createBitmap(
-                drawable.getIntrinsicWidth(),
-                drawable.getIntrinsicHeight(),
-                Bitmap.Config.ARGB_8888
-        );
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-        return bitmap;
+    public static Bitmap getDefaultMediaBitmap(@NonNull Resources resources) {
+        if (defaultBitmap == null) {
+            Drawable drawable = getDefaultMediaDrawable(resources);
+            Bitmap bitmap = Bitmap.createBitmap(
+                    drawable.getIntrinsicWidth(),
+                    drawable.getIntrinsicHeight(),
+                    Bitmap.Config.ARGB_8888
+            );
+            Canvas canvas = new Canvas(bitmap);
+            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            drawable.draw(canvas);
+            defaultBitmap = bitmap;
+        }
+        return defaultBitmap;
     }
 
     /**

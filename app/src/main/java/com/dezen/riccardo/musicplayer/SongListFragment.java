@@ -27,6 +27,8 @@ import java.util.Observer;
  * @author Riccardo De Zen.
  */
 public class SongListFragment extends Fragment {
+    // TODO remove, think of something better.
+    private static final int DEFAULT_BITMAP_SIZE = 128;
 
     private PlayerClient playerClient;
     private SongManager songManager;
@@ -39,6 +41,7 @@ public class SongListFragment extends Fragment {
     );
 
     /**
+     * TODO this may lead to a crash if the system tries to restore the fragment. Move client.
      * Create a new Fragment attached to a client for the app's Service.
      *
      * @param playerClient The client.
@@ -177,7 +180,7 @@ public class SongListFragment extends Fragment {
             titleView.setText(song.getTitle());
             albumView.setText(song.getAlbum());
             artistView.setText(song.getArtist());
-            imageView.setImageDrawable(songManager.getSongDrawable(song.getId()));
+            imageView.setImageBitmap(songManager.getSongBitmap(song.getId(), DEFAULT_BITMAP_SIZE));
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.dezen.riccardo.musicplayer.song;
 
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;
@@ -20,6 +21,7 @@ import java.util.List;
  */
 class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
 
+    private ContentResolver contentResolver;
     private List<Song> songs = new ArrayList<>();
     private SongLoader.Listener listener;
     private Cursor cursor;
@@ -31,9 +33,11 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
      * @param listener The listener that will receive the result.
      */
     public SongLoadTask(@NonNull Cursor cursor,
-                        @NonNull SongLoader.Listener listener) {
+                        @NonNull SongLoader.Listener listener,
+                        @NonNull ContentResolver contentResolver) {
         this.cursor = cursor;
         this.listener = listener;
+        this.contentResolver = contentResolver;
     }
 
     /**
@@ -54,19 +58,22 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
 
         cursor.moveToFirst();
         do {
+            // Uri is not in both tables.
+            Uri uri = ContentUris.withAppendedId(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    Long.parseLong(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)))
+            );
+            // TODO Check if the file is acceptable.
+
+            // If the file is an audio file, continue.
+            builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, String.valueOf(uri));
+
             for (String key : cursor.getColumnNames()) {
                 String metaKey = Song.MEDIA_TO_META.get(key);
                 if (metaKey == null)
                     continue;
                 builder.putString(metaKey, cursor.getString(cursor.getColumnIndex(key)));
             }
-            // Uri is not in both tables.
-            Uri uri = ContentUris.withAppendedId(
-                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    Long.parseLong(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)))
-            );
-            builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, String.valueOf(uri));
-            // Neither is the album art. But that is retrieved when generating the notification.
 
             songs.add(new Song(builder.build()));
             publishProgress(songs.size() / count * 100);

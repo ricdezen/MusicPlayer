@@ -4,7 +4,6 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.support.v4.media.MediaMetadataCompat;
 
 import androidx.annotation.NonNull;
@@ -150,22 +149,7 @@ public class SongManager extends Observable implements SongLoader.Listener, Song
     }
 
     /**
-     * Get the artwork for a Song. The artwork may not be loaded yet, or may not be present at all,
-     * in which case a default one is returned.
-     *
-     * @param id The id of the Song.
-     * @return A Drawable to serve as artwork for the image.
-     */
-    @NonNull
-    public Drawable getSongDrawable(String id) {
-        Song song = get(id);
-        MediaMetadataCompat metadata = (song != null) ? song.getMetadata() : null;
-        return Utils.getMediaDrawable(metadata, contentResolver, resources);
-    }
-
-    /**
-     * Similar to {@link SongManager#getSongDrawable(String)}, but returns a Bitmap for use in the
-     * Notification.
+     * Returns a Bitmap for a Song.
      *
      * @param id The id of the Song.
      * @return A Bitmap to serve as artwork for the image.
@@ -175,6 +159,30 @@ public class SongManager extends Observable implements SongLoader.Listener, Song
         Song song = get(id);
         MediaMetadataCompat metadata = (song != null) ? song.getMetadata() : null;
         return Utils.getMediaBitmap(metadata, contentResolver, resources);
+    }
+
+    /**
+     * Returns a Bitmap for a Song, resizing it if needed. It will resize keeping aspect ratio, the
+     * resulting image will have {@code size} on its smaller dimension.
+     *
+     * @param id   The id of the Song.
+     * @param size The size for the output image.
+     * @return A Bitmap to serve as artwork for the image.
+     */
+    @NonNull
+    public Bitmap getSongBitmap(String id, int size) {
+        Bitmap baseImage = getSongBitmap(id);
+        int width = baseImage.getWidth();
+        int height = baseImage.getHeight();
+        double aspectRatio = (1.0 * width) / (1.0 * height);
+        if (width > height) {
+            height = size;
+            width = (int) Math.round(size * aspectRatio);
+        } else {
+            width = size;
+            height = (int) Math.round(size * aspectRatio);
+        }
+        return Bitmap.createScaledBitmap(baseImage, width, height, true);
     }
 
     /**
