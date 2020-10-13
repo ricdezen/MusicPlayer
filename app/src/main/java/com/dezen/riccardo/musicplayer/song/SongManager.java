@@ -15,7 +15,7 @@ import java.util.Observable;
  *
  * @author Riccardo De Zen.
  */
-public class SongManager extends Observable implements SongLoader.Listener {
+public class SongManager extends Observable implements SongLoader.Listener, SongLibrary {
     /**
      * Only available instance of this class.
      */
@@ -82,18 +82,19 @@ public class SongManager extends Observable implements SongLoader.Listener {
      * @return The Song whose id matches the String, or null if not present.
      */
     @Nullable
-    public synchronized Song get(String id) {
+    public synchronized Song get(@NonNull String id) {
         return idMap.get(id);
     }
 
     /**
      * Find the Song that comes after the given one.
+     * TODO move to the playlist.
      *
      * @param id Id for the Song.
      * @return The next Song, or null if the Song list is empty or the Song can't be found.
      */
     @Nullable
-    public synchronized Song next(String id) {
+    public synchronized Song next(@NonNull String id) {
         // Empty list -> null.
         if (songList.isEmpty())
             return null;
@@ -109,12 +110,13 @@ public class SongManager extends Observable implements SongLoader.Listener {
 
     /**
      * Find the Song that comes before the given one.
+     * TODO remove and move to the Playlist.
      *
      * @param id Id for the Song.
      * @return The previous Song, or null if the Song list is empty or the Song can't be found.
      */
     @Nullable
-    public synchronized Song previous(String id) {
+    public synchronized Song previous(@NonNull String id) {
         // Empty list -> null.
         if (songList.isEmpty())
             return null;

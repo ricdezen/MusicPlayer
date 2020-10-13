@@ -57,6 +57,9 @@ public class PlayerService extends MediaBrowserServiceCompat {
         // Media player.
         mediaPlayer = new MediaPlayer();
 
+        // Call the Song Manager.
+        songManager = SongManager.getInstance(this);
+
         // Ensure notification channel is created.
         notificationHelper = NotificationHelper.getInstance(this);
         notificationHelper.createChannelIfNeeded();
@@ -69,7 +72,7 @@ public class PlayerService extends MediaBrowserServiceCompat {
         // Create MediaSession.
         mediaSession = new MediaSessionCompat(this, LOG_TAG);
         mediaSession.setPlaybackState(playbackStateBuilder.build());
-        mediaSession.setCallback(playerCallback);
+        mediaSession.setCallback(new PlayerWrapper(songManager, this));
         mediaSession.setSessionActivity(PendingIntent.getActivity(
                 this, ACTIVITY_PENDING_INTENT_CODE,
                 new Intent(this, MainActivity.class),
@@ -78,9 +81,6 @@ public class PlayerService extends MediaBrowserServiceCompat {
 
         // Set the token for this Service. Allows finding the Session from outside.
         setSessionToken(mediaSession.getSessionToken());
-
-        // Call the Song Manager.
-        songManager = SongManager.getInstance(this);
     }
 
     @Override
@@ -205,128 +205,4 @@ public class PlayerService extends MediaBrowserServiceCompat {
         mediaPlayer.release();
         super.onDestroy();
     }
-
-    /**
-     * Callback class implementing the various methods for communicating between the
-     * {@link PlayerService} and a client.
-     */
-    private MediaSessionCompat.Callback playerCallback = new MediaSessionCompat.Callback() {
-
-        /**
-         * Play from a specific media id. If the id is not found in the SongManager class, the
-         * method returns.
-         *
-         * @param mediaId Id, String containing the index of the item in the list.
-         * @param extras Ignored.
-         */
-        @Override
-        public void onPlayFromMediaId(String mediaId, Bundle extras) {
-            super.onPlayFromMediaId(mediaId, extras);
-
-            // Return if song is not found.
-            Song song = songManager.get(mediaId);
-            if (song == null)
-                return;
-
-            // Start (or restart) the Service.
-            startService(new Intent(PlayerService.this, PlayerService.class));
-
-            // Set the Media Session as active.
-            mediaSession.setActive(true);
-
-            // Play the song on the Service.
-            play(song);
-
-            // Put the Service in the foreground.
-            startForeground(
-                    NOTIFICATION_ID,
-                    getNotification()
-            );
-
-        }
-
-        /**
-         * The Media session received a play command.
-         * TODO : Audio Focus, noisy
-         */
-        @Override
-        public void onPlay() {
-            super.onPlay();
-
-            // Start (or restart) the Service.
-            startService(new Intent(PlayerService.this, PlayerService.class));
-
-            // Set the Media Session as active.
-            mediaSession.setActive(true);
-
-            // Play the song on the Service.
-            resume();
-
-            // Put the Service in the foreground.
-            startForeground(
-                    NOTIFICATION_ID,
-                    getNotification()
-            );
-        }
-
-        /**
-         * The Media session received a pause command.
-         * TODO noisy
-         */
-        @Override
-        public void onPause() {
-            super.onPause();
-            pause();
-            // Stop being in the foreground.
-            stopForeground(false);
-            // Update the notification.
-            notificationHelper.notify(NOTIFICATION_ID, getNotification());
-        }
-
-        /**
-         * The Media session received a stop command.
-         */
-        @Override
-        public void onStop() {
-            super.onStop();
-            stopPlayer();
-            mediaSession.setActive(false);
-            stopForeground(false);
-            stopSelf();
-        }
-
-        /**
-         * Skip to the next Song.
-         */
-        @Override
-        public void onSkipToNext() {
-            super.onSkipToNext();
-
-            if (currentSongId == null)
-                return;
-
-            Song song = songManager.next(currentSongId);
-            if (song == null)
-                return;
-
-            onPlayFromMediaId(song.getId(), null);
-        }
-
-        /**
-         * Skip to the previous Song.
-         */
-        @Override
-        public void onSkipToPrevious() {
-            super.onSkipToPrevious();
-
-            if (currentSongId == null)
-                return;
-
-            Song song = songManager.previous(currentSongId);
-            if (song == null)
-                return;
-
-            onPlayFromMediaId(song.getId(), null);
-        }
-    };
 }

@@ -1,6 +1,7 @@
 package com.dezen.riccardo.musicplayer;
 
 import com.dezen.riccardo.musicplayer.song.Song;
+import com.dezen.riccardo.musicplayer.song.SongLibrary;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +26,15 @@ public class PlayList extends ArrayList<Song> implements FilterableList<String, 
      */
     public PlayList(Collection<Song> collection) {
         super(collection);
+    }
+
+    /**
+     * Build a PlayList with all the contents of a Library.
+     *
+     * @param library A library of audio files.
+     */
+    public PlayList(SongLibrary library) {
+        this(library.getSongs());
     }
 
     /**
