@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -158,6 +159,7 @@ public class SongListFragment extends Fragment {
         private TextView titleView;
         private TextView albumView;
         private TextView artistView;
+        private ImageView imageView;
         private Song song;
 
         public CustomHolder(@NonNull View itemView) {
@@ -165,6 +167,8 @@ public class SongListFragment extends Fragment {
             this.titleView = itemView.findViewById(R.id.textView_song_title);
             this.albumView = itemView.findViewById(R.id.textView_song_album);
             this.artistView = itemView.findViewById(R.id.textView_song_artist);
+            this.imageView = itemView.findViewById(R.id.imageView_song);
+            this.imageView.setClipToOutline(true);
             this.itemView.setOnClickListener(v -> playerClient.play(this.song.getId()));
         }
 
@@ -173,6 +177,7 @@ public class SongListFragment extends Fragment {
             titleView.setText(song.getTitle());
             albumView.setText(song.getAlbum());
             artistView.setText(song.getArtist());
+            imageView.setImageDrawable(songManager.getSongDrawable(song.getId()));
         }
     }
 }

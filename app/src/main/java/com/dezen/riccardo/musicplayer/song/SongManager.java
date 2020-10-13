@@ -42,6 +42,7 @@ public class SongManager extends Observable implements SongLoader.Listener, Song
      * @param context The calling context, used to retrieve an instance of {@link SongLoader}.
      */
     private SongManager(Context context) {
+        resources = context.getResources();
         songLoader = SongLoader.getInstance(context);
         contentResolver = context.getContentResolver();
 
