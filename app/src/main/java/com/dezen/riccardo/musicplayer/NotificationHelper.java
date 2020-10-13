@@ -154,7 +154,7 @@ public class NotificationHelper {
 
                 // Make the transport controls visible on the lock screen.
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                // Add a Play/Pause button
+                // Media control buttons
                 .addAction(R.drawable.previous_icon,
                         resources.getString(R.string.previous),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(

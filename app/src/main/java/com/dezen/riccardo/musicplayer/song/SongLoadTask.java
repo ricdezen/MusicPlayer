@@ -51,19 +51,18 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
 
         cursor.moveToFirst();
         do {
-            String id = cursor.getString(0);
+            for (String key : cursor.getColumnNames()) {
+                String metaKey = Song.MEDIA_TO_META.get(key);
+                if (metaKey == null)
+                    continue;
+                builder.putString(metaKey, cursor.getString(cursor.getColumnIndex(key)));
+            }
+            // Uri is not in both tables.
             Uri uri = ContentUris.withAppendedId(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    Long.parseLong(id)
+                    Long.parseLong(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)))
             );
-
-            builder
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, id)
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, String.valueOf(uri))
-                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, cursor.getString(1))
-                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, cursor.getString(2))
-                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, cursor.getString(3))
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, cursor.getLong(4));
+            builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, String.valueOf(uri));
 
             songs.add(new Song(builder.build()));
             publishProgress(songs.size() / count * 100);
