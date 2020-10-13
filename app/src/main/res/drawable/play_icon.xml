@@ -7,5 +7,8 @@
     <path
         android:name="arrow"
         android:fillColor="#000"
-        android:pathData="M 3 0 L 22 12 L 3 24 Z" />
+        android:pathData="M 3 1 L 22 12 L 3 23 Z"
+        android:strokeWidth="2"
+        android:strokeLineJoin="round"
+        android:strokeColor="#000" />
 </vector>

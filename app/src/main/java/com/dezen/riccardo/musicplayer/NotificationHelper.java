@@ -176,6 +176,7 @@ public class NotificationHelper {
                         ))
                 .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                         .setMediaSession(service.getMediaSession().getSessionToken())
+                        .setShowActionsInCompactView(0, 1, 2)
                 );
 
 
