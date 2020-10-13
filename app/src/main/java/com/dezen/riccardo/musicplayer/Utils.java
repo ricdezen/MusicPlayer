@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
@@ -13,6 +14,8 @@ import android.os.ParcelFileDescriptor;
 import android.support.v4.media.MediaMetadataCompat;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
@@ -25,16 +28,21 @@ public class Utils {
     private static int defaultImage = R.drawable.song_icon;
 
     /**
-     * @param context  The context, used to get resources.
-     * @param metadata Metadata for a song.
+     * Retrieve a Drawable for a certain metadata. If the metadata is null, retrieve a default
+     * Drawable.
+     *
+     * @param metadata        Metadata for a song.
+     * @param contentResolver The Content Resolver.
+     * @param resources       App resources.
      * @return The Bitmap for the given song, or a default image.
      */
-    public static Bitmap getBitmap(@NonNull Context context,
-                                   @NonNull MediaMetadataCompat metadata) {
-        Resources resources = context.getResources();
-        ContentResolver contentResolver = context.getContentResolver();
+    public static Drawable getMediaDrawable(@Nullable MediaMetadataCompat metadata,
+                                            @NonNull ContentResolver contentResolver,
+                                            @NonNull Resources resources) {
+        if (metadata == null)
+            return getDefaultMediaDrawable(resources);
+
         Uri uri = Uri.parse(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI));
-        Bitmap bitmap;
         try {
             // If the content resolver has crashed, the file is null.
             ParcelFileDescriptor asset = contentResolver.openFileDescriptor(uri, "r");
@@ -49,21 +57,114 @@ public class Utils {
             // If no embedded picture is found, the array is null.
             if (rawBytes == null)
                 throw new NullPointerException();
-            bitmap = BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.length);
-
+            Bitmap bitmap = BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.length);
+            return new BitmapDrawable(resources, bitmap);
         } catch (FileNotFoundException | NullPointerException e) {
             e.printStackTrace();
             // No image found for whatever reason, fall back to a default.
-            Drawable originalImage = resources.getDrawable(defaultImage);
-            bitmap = Bitmap.createBitmap(
-                    originalImage.getIntrinsicWidth(),
-                    originalImage.getIntrinsicHeight(),
-                    Bitmap.Config.ARGB_8888
-            );
-            Canvas canvas = new Canvas(bitmap);
-            originalImage.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-            originalImage.draw(canvas);
+            return getDefaultMediaDrawable(resources);
         }
+    }
+
+    /**
+     * Retrieve a Drawable for a certain metadata. If the metadata is null, retrieve a default
+     * Drawable.
+     *
+     * @param metadata Metadata for a song.
+     * @param context  The context.
+     * @return The Bitmap for the given song, or a default image.
+     */
+    public static Drawable getMediaDrawable(@Nullable MediaMetadataCompat metadata,
+                                            @NonNull Context context) {
+        return getMediaDrawable(metadata, context.getContentResolver(), context.getResources());
+    }
+
+    /**
+     * Retrieve a Bitmap for a certain metadata. If the metadata is null, retrieve a default
+     * Bitmap.
+     *
+     * @param metadata        Metadata for a song.
+     * @param contentResolver The Content Resolver.
+     * @param resources       App resources.
+     * @return The Bitmap for the given song, or a default image.
+     */
+    public static Bitmap getMediaBitmap(@Nullable MediaMetadataCompat metadata,
+                                        @NonNull ContentResolver contentResolver,
+                                        @NonNull Resources resources) {
+        if (metadata == null)
+            return getDefaultMediaBitmap(resources);
+
+        Uri uri = Uri.parse(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI));
+        try {
+            // If the content resolver has crashed, the file is null.
+            ParcelFileDescriptor asset = contentResolver.openFileDescriptor(uri, "r");
+            if (asset == null)
+                throw new FileNotFoundException();
+
+            // Need a raw file descriptor.
+            FileDescriptor file = asset.getFileDescriptor();
+            retriever.setDataSource(file);
+            byte[] rawBytes = retriever.getEmbeddedPicture();
+
+            // If no embedded picture is found, the array is null.
+            if (rawBytes == null)
+                throw new NullPointerException();
+            return BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.length);
+        } catch (FileNotFoundException | NullPointerException e) {
+            e.printStackTrace();
+            // No image found for whatever reason, fall back to a default.
+            return getDefaultMediaBitmap(resources);
+        }
+    }
+
+    /**
+     * Retrieve a Bitmap for a certain metadata. If the metadata is null, retrieve a default
+     * Bitmap.
+     *
+     * @param metadata Metadata for a song.
+     * @param context  The context.
+     * @return The Bitmap for the given song, or a default image.
+     */
+    public static Bitmap getMediaBitmap(@Nullable MediaMetadataCompat metadata,
+                                        @NonNull Context context) {
+        return getMediaBitmap(metadata, context.getContentResolver(), context.getResources());
+    }
+
+    /**
+     * Change the default song drawable's id.
+     *
+     * @param defaultImage The resource id of the desired default drawable.
+     */
+    public static void setDefaultImage(int defaultImage) {
+        Utils.defaultImage = defaultImage;
+    }
+
+    /**
+     * Return the default Drawable for a Song.
+     *
+     * @param resources The app resources.
+     * @return The default Drawable.
+     */
+    private static Drawable getDefaultMediaDrawable(@NonNull Resources resources) {
+        return ResourcesCompat.getDrawable(resources, defaultImage, null);
+    }
+
+    /**
+     * Return the default Bitmap for a Song.
+     *
+     * @param resources The app resources.
+     * @return The default Bitmap.
+     */
+    private static Bitmap getDefaultMediaBitmap(@NonNull Resources resources) {
+        Drawable drawable = getDefaultMediaDrawable(resources);
+        Bitmap bitmap = Bitmap.createBitmap(
+                drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888
+        );
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
         return bitmap;
     }
 

@@ -1,9 +1,16 @@
 package com.dezen.riccardo.musicplayer.song;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.support.v4.media.MediaMetadataCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.dezen.riccardo.musicplayer.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +28,9 @@ public class SongManager extends Observable implements SongLoader.Listener, Song
      */
     private static SongManager activeInstance;
 
+    private ContentResolver contentResolver;
+    private Resources resources;
+
     private List<Song> songList;
     private HashMap<String, Song> idMap;
     private HashMap<String, Integer> indexMap;
@@ -33,6 +43,7 @@ public class SongManager extends Observable implements SongLoader.Listener, Song
      */
     private SongManager(Context context) {
         songLoader = SongLoader.getInstance(context);
+        contentResolver = context.getContentResolver();
 
         // The list of songs starts as empty.
         songList = new ArrayList<>();
@@ -135,6 +146,34 @@ public class SongManager extends Observable implements SongLoader.Listener, Song
      */
     public synchronized int size() {
         return songList.size();
+    }
+
+    /**
+     * Get the artwork for a Song. The artwork may not be loaded yet, or may not be present at all,
+     * in which case a default one is returned.
+     *
+     * @param id The id of the Song.
+     * @return A Drawable to serve as artwork for the image.
+     */
+    @NonNull
+    public Drawable getSongDrawable(String id) {
+        Song song = get(id);
+        MediaMetadataCompat metadata = (song != null) ? song.getMetadata() : null;
+        return Utils.getMediaDrawable(metadata, contentResolver, resources);
+    }
+
+    /**
+     * Similar to {@link SongManager#getSongDrawable(String)}, but returns a Bitmap for use in the
+     * Notification.
+     *
+     * @param id The id of the Song.
+     * @return A Bitmap to serve as artwork for the image.
+     */
+    @NonNull
+    public Bitmap getSongBitmap(String id) {
+        Song song = get(id);
+        MediaMetadataCompat metadata = (song != null) ? song.getMetadata() : null;
+        return Utils.getMediaBitmap(metadata, contentResolver, resources);
     }
 
     /**
