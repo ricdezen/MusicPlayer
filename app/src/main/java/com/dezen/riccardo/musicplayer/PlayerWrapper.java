@@ -1,13 +1,25 @@
 package com.dezen.riccardo.musicplayer;
 
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
+import android.widget.Toast;
 
 import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
 
+import java.io.IOException;
+
 public class PlayerWrapper extends MediaSessionCompat.Callback {
+
+    public static final long[] SUPPORTED_ACTIONS = new long[]{
+            PlaybackStateCompat.ACTION_PLAY_PAUSE,
+            PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID,
+            PlaybackStateCompat.ACTION_SKIP_TO_NEXT,
+            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+    };
 
     // The full library of Songs.
     private SongManager library;
@@ -19,13 +31,26 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     private NotificationHelper notificationHelper;
     // Current Song.
     private String currentSongId;
+    // The media player.
+    private MediaPlayer mediaPlayer;
+    // PlaybackStateBuilder.
+    private PlaybackStateCompat.Builder playbackStateBuilder;
 
     // TODO change SongManager to SongLibrary.
+    // Sets the state of the service's session, is this a good idea?
     public PlayerWrapper(SongManager library, PlayerService service) {
         this.library = library;
         this.service = service;
+        this.mediaPlayer = new MediaPlayer();
         this.session = service.getMediaSession();
         this.notificationHelper = NotificationHelper.getInstance(service);
+
+        // Setup PlaybackStateBuilder.
+        this.playbackStateBuilder = new PlaybackStateCompat.Builder()
+                .setState(PlaybackStateCompat.STATE_NONE, 0, 0)
+                .setActions(Utils.bitOR(SUPPORTED_ACTIONS));
+        // Default state.
+        this.session.setPlaybackState(playbackStateBuilder.build());
     }
 
     /**
@@ -51,7 +76,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         session.setActive(true);
 
         // Play the song on the Service.
-        service.play(song);
+        play(song);
         currentSongId = mediaId;
 
         // Put the Service in the foreground.
@@ -76,8 +101,8 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         // Set the Media Session as active.
         session.setActive(true);
 
-        // Play the song on the Service.
-        service.resume();
+        // Play the song.
+        resume();
 
         // Put the Service in the foreground.
         service.startForeground(
@@ -93,7 +118,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     @Override
     public void onPause() {
         super.onPause();
-        service.pause();
+        pause();
         // Stop being in the foreground.
         service.stopForeground(false);
         // Update the notification.
@@ -106,7 +131,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     @Override
     public void onStop() {
         super.onStop();
-        service.stopPlayer();
+        stop();
         session.setActive(false);
         service.stopForeground(false);
         service.stopSelf();
@@ -144,6 +169,83 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
             return;
 
         onPlayFromMediaId(song.getId(), null);
+    }
+
+    /**
+     * TODO
+     * Release the resources associated with this player.
+     */
+    public void release() {
+        stop();
+        mediaPlayer.release();
+    }
+
+    /**
+     * Prepare new song and play.
+     *
+     * @param song The song to play.
+     */
+    private void play(Song song) {
+        if (mediaPlayer.isPlaying())
+            mediaPlayer.stop();
+        prepare(song);
+        resume();
+    }
+
+    /**
+     * Method to prepare a song to play. Resets the current mediaPlayer.
+     *
+     * @param song The song for which to prepare playback.
+     */
+    public void prepare(Song song) {
+        mediaPlayer.reset();
+        try {
+            mediaPlayer.setDataSource(service, song.getUri());
+            mediaPlayer.prepare();
+            session.setMetadata(song.getMetadata());
+        } catch (IOException e) {
+            Toast.makeText(service, R.string.file_open_error, Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Method to pause the playback of a song.
+     */
+    public void pause() {
+        mediaPlayer.pause();
+        session.setPlaybackState(playbackStateBuilder.setState(
+                PlaybackStateCompat.STATE_PAUSED,
+                mediaPlayer.getCurrentPosition(),
+                // TODO playback speed
+                0
+        ).build());
+    }
+
+    /**
+     * Resume playback without changing the song.
+     */
+    public void resume() {
+        mediaPlayer.start();
+        session.setPlaybackState(playbackStateBuilder.setState(
+                PlaybackStateCompat.STATE_PLAYING,
+                mediaPlayer.getCurrentPosition(),
+                // TODO playback speed
+                0
+        ).build());
+    }
+
+    /**
+     * Method to stop the playback of a song.
+     */
+    public void stop() {
+        mediaPlayer.stop();
+        session.setPlaybackState(playbackStateBuilder.setState(
+                PlaybackStateCompat.STATE_STOPPED,
+                mediaPlayer.getCurrentPosition(),
+                // TODO playback speed
+                0
+        ).build());
     }
 
 }

@@ -34,8 +34,15 @@ public class Song implements Filterable<String> {
     public static Map<String, String> MEDIA_TO_META = Utils.toMap(MEDIA_COLUMNS, META_COLUMNS);
     public static Map<String, String> META_TO_MEDIA = Utils.toMap(META_COLUMNS, MEDIA_COLUMNS);
 
-    private MediaMetadataCompat metadata;
-    private MediaBrowserCompat.MediaItem mediaItem;
+    private final MediaMetadataCompat metadata;
+    private final MediaBrowserCompat.MediaItem mediaItem;
+
+    private final String id;
+    private final String title;
+    private final String album;
+    private final String artist;
+
+    private final Uri uri;
 
     /**
      * @param metadata The {@link MediaMetadataCompat} for this Song. Must contain at least: id,
@@ -48,11 +55,12 @@ public class Song implements Filterable<String> {
         );
 
         this.metadata = metadata;
-    }
+        this.id = metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+        this.title = metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
+        this.album = metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
+        this.artist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
 
-    @NonNull
-    public String getId() {
-        return metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+        this.uri = Uri.parse(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI));
     }
 
     @NonNull
@@ -61,23 +69,33 @@ public class Song implements Filterable<String> {
     }
 
     @NonNull
-    public String getTitle() {
-        return String.valueOf(metadata.getDescription().getTitle());
+    public MediaBrowserCompat.MediaItem getMediaItem() {
+        return mediaItem;
     }
 
     @NonNull
-    public String getAuthor() {
-        return metadata.getString(MediaMetadataCompat.METADATA_KEY_AUTHOR);
+    public String getId() {
+        return id;
+    }
+
+    @NonNull
+    public String getTitle() {
+        return title;
+    }
+
+    @NonNull
+    public String getArtist() {
+        return artist;
     }
 
     @NonNull
     public String getAlbum() {
-        return metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
+        return album;
     }
 
     @NonNull
     public Uri getUri() {
-        return Uri.parse(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI));
+        return uri;
     }
 
     /**
