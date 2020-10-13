@@ -3,7 +3,6 @@ package com.dezen.riccardo.musicplayer;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
@@ -100,7 +99,7 @@ public class PlayerClient {
      * @param song Song to play.
      */
     public void play(Song song) {
-        play(song.getMetadata().getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID));
+        play(song.getId());
     }
 
     /**
@@ -118,5 +117,4 @@ public class PlayerClient {
         else
             mediaController.getTransportControls().play();
     }
-
 }

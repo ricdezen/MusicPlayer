@@ -7,6 +7,7 @@ import android.support.v4.media.MediaMetadataCompat;
 
 import androidx.annotation.NonNull;
 
+import com.dezen.riccardo.musicplayer.Filterable;
 import com.dezen.riccardo.musicplayer.Utils;
 
 import java.util.Map;
@@ -16,7 +17,7 @@ import java.util.Map;
  *
  * @author Riccardo De Zen.
  */
-public class Song {
+public class Song implements Filterable<String> {
 
     public static final String[] META_COLUMNS = {
             MediaMetadataCompat.METADATA_KEY_MEDIA_ID,
@@ -77,5 +78,16 @@ public class Song {
     @NonNull
     public Uri getUri() {
         return Uri.parse(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI));
+    }
+
+    /**
+     * A song matches a Query if its title contains the query itself.
+     *
+     * @param query any String.
+     * @return True if the Song's title contains the query, false otherwise.
+     */
+    @Override
+    public boolean matches(String query) {
+        return getTitle().contains(query);
     }
 }
