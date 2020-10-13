@@ -7,14 +7,15 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
 
 import java.util.Observer;
@@ -28,12 +29,12 @@ public class SongListFragment extends Fragment {
 
     private PlayerClient playerClient;
     private SongManager songManager;
-    private ListView songsListView;
+    private RecyclerView songsRecycler;
     private View rootView;
 
     // When songs are updated, update List.
     private Observer songObserver = (obj, newVal) -> onMainThread(
-            () -> songsListView.setAdapter(new CustomAdapter())
+            () -> songsRecycler.setAdapter(new CustomAdapter())
     );
 
     /**
@@ -80,8 +81,9 @@ public class SongListFragment extends Fragment {
     public void onStart() {
         super.onStart();
         // First List setup.
-        songsListView = rootView.findViewById(R.id.songs_listview);
-        songsListView.setAdapter(new CustomAdapter());
+        songsRecycler = rootView.findViewById(R.id.songs_recycler);
+        songsRecycler.setLayoutManager(new LinearLayoutManager(getContext()));
+        songsRecycler.setAdapter(new CustomAdapter());
 
         // Observe changes in the Song list.
         songManager.addObserver(songObserver);
@@ -97,22 +99,6 @@ public class SongListFragment extends Fragment {
         songManager.deleteObserver(songObserver);
     }
 
-    private View getItemView(final int index) {
-        View newView = getLayoutInflater().inflate(R.layout.song_listview_item, null);
-        ((TextView) newView.findViewById(R.id.textView_song_title)).setText(
-                songManager.get(index).getTitle()
-        );
-        ((TextView) newView.findViewById(R.id.textView_song_album)).setText(
-                songManager.get(index).getAlbum()
-        );
-        ((TextView) newView.findViewById(R.id.textView_song_artist)).setText(
-                songManager.get(index).getArtist()
-        );
-        // When a view is clicked play the corresponding song.
-        newView.setOnClickListener(v -> playerClient.play(songManager.get(index)));
-        return newView;
-    }
-
     /**
      * Run a Runnable on the main UI thread.
      *
@@ -122,15 +108,33 @@ public class SongListFragment extends Fragment {
         new Handler(Looper.getMainLooper()).post(runnable);
     }
 
-    private class CustomAdapter extends BaseAdapter {
+    private class CustomAdapter extends RecyclerView.Adapter<CustomHolder> {
+
+        /**
+         * A new ViewHolder is created.
+         *
+         * @param parent   The ViewGroup into which the new View will be added after it is bound to
+         *                 an adapter position.
+         * @param viewType The view type of the new View.
+         * @return A new ViewHolder that holds a View of the given view type.
+         */
+        @NonNull
         @Override
-        public int getCount() {
-            return songManager.size();
+        public CustomHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View itemView = getLayoutInflater().inflate(R.layout.song_listview_item, parent, false);
+            return new CustomHolder(itemView);
         }
 
+        /**
+         * A ViewHolder gets populated.
+         *
+         * @param holder   The ViewHolder which should be updated to represent the contents of the
+         *                 item at the given position in the data set.
+         * @param position The position of the item within the adapter's data set.
+         */
         @Override
-        public Object getItem(int position) {
-            return null;
+        public void onBindViewHolder(@NonNull CustomHolder holder, int position) {
+            holder.populate(songManager.get(position));
         }
 
         @Override
@@ -138,9 +142,37 @@ public class SongListFragment extends Fragment {
             return 0;
         }
 
+        /**
+         * Returns the total number of items in the data set held by the adapter.
+         *
+         * @return The total number of items in this adapter.
+         */
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            return getItemView(position);
+        public int getItemCount() {
+            return songManager.size();
+        }
+    }
+
+    private class CustomHolder extends RecyclerView.ViewHolder {
+
+        private TextView titleView;
+        private TextView albumView;
+        private TextView artistView;
+        private Song song;
+
+        public CustomHolder(@NonNull View itemView) {
+            super(itemView);
+            this.titleView = itemView.findViewById(R.id.textView_song_title);
+            this.albumView = itemView.findViewById(R.id.textView_song_album);
+            this.artistView = itemView.findViewById(R.id.textView_song_artist);
+            this.itemView.setOnClickListener(v -> playerClient.play(this.song.getId()));
+        }
+
+        public void populate(@NonNull Song song) {
+            this.song = song;
+            titleView.setText(song.getTitle());
+            albumView.setText(song.getAlbum());
+            artistView.setText(song.getArtist());
         }
     }
 }

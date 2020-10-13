@@ -51,12 +51,12 @@
 
     <TextView
         android:id="@+id/separator"
-        android:textColor="@color/lightGray"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:text="|"
+        android:textColor="@color/lightGray"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
