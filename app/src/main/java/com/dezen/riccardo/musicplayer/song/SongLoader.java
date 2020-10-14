@@ -83,8 +83,8 @@ public class SongLoader {
     }
 
     /**
-     * TODO temporary null projection. Inefficient.
      * Method to retrieve an updated cursor from the {@link android.content.ContentResolver}.
+     * All columns are included by default.
      */
     private Cursor getCursor() {
         return contentResolver.query(

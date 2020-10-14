@@ -164,29 +164,20 @@ public class SongManager extends Observable implements SongLoader.SongListListen
     }
 
     /**
-     * TODO
-     * Returns a Bitmap for a Song, resizing it if needed. It will resize keeping aspect ratio, the
-     * resulting image will have {@code size} on its smaller dimension.
+     * Returns a Bitmap for a Song. The operation is performed asynchronously. If the song is
+     * unknown, the operation is performed synchronously immediately.
      *
-     * @param id   The id of the Song.
-     * @param size The size for the output image.
-     * @return A Bitmap to serve as artwork for the image.
+     * @param id       The id of the Song.
+     * @param size     The target size.
+     * @param listener The callback for when the loading is done.
      */
-    /*@NonNull
-    public Bitmap getSongBitmap(String id, int size) {
-        Bitmap baseImage = getSongBitmap(id);
-        int width = baseImage.getWidth();
-        int height = baseImage.getHeight();
-        double aspectRatio = (1.0 * width) / (1.0 * height);
-        if (width > height) {
-            height = size;
-            width = (int) Math.round(size * aspectRatio);
-        } else {
-            width = size;
-            height = (int) Math.round(size * aspectRatio);
-        }
-        return Bitmap.createScaledBitmap(baseImage, width, height, true);
-    }*/
+    public void getThumbnail(@NonNull String id, int size,
+                             @NonNull SongLoader.ThumbnailListener listener) {
+        // Wrap the listener to resize the result.
+        getThumbnail(id, (resultId, thumbnail) ->
+                listener.onLoaded(resultId, Utils.resizeThumbnail(thumbnail, size))
+        );
+    }
 
     /**
      * Method used to update the song list. A new List will be created and used when replacing

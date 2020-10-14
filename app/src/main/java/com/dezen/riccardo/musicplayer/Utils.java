@@ -120,6 +120,31 @@ public class Utils {
     }
 
     /**
+     * Returns a Bitmap, resized to be displayed as a squared, cropped thumbnail. It will resize
+     * keeping aspect ratio, the resulting image will have {@code size} on its smaller dimension,
+     * using an ImageView with {@code android:scaleType="centerCrop"} will crop the image on its
+     * larger dimension.
+     *
+     * @param thumbnail The image to resize.
+     * @param size      The size the smaller side should have after resizing.
+     * @return The resized Bitmap.
+     */
+    public static Bitmap resizeThumbnail(@NonNull Bitmap thumbnail, int size) {
+        int width = thumbnail.getWidth();
+        int height = thumbnail.getHeight();
+        int newWidth, newHeight;
+        double aspectRatio = (1.0 * width) / (1.0 * height);
+        if (width > height) {
+            newHeight = size;
+            newWidth = (int) Math.round(size * aspectRatio);
+        } else {
+            newWidth = size;
+            newHeight = (int) Math.round(size * aspectRatio);
+        }
+        return Bitmap.createScaledBitmap(thumbnail, newWidth, newHeight, true);
+    }
+
+    /**
      * Return the bitwise XOR for an array of long arguments.
      *
      * @param args The arguments.
