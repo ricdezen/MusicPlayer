@@ -1,9 +1,12 @@
 package com.dezen.riccardo.musicplayer;
 
 import android.content.Context;
+import android.graphics.drawable.AnimatedVectorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaControllerCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,15 +33,42 @@ public class SongListFragment extends Fragment {
     // TODO remove, think of something better.
     private static final int DEFAULT_BITMAP_SIZE = 128;
 
+    private static final int NOW_PLAYING = 1;
+    private static final int DEFAULT_VIEW = 0;
+
     private PlayerClient playerClient;
     private SongManager songManager;
     private RecyclerView songsRecycler;
     private View rootView;
 
+    private String currentSong;
+
+    // Runnable to update recycler.
+    private Runnable updateRecycler = () -> {
+        if (songsRecycler.getAdapter() != null)
+            songsRecycler.getAdapter().notifyDataSetChanged();
+    };
+
     // When songs are updated, update List.
-    private Observer songObserver = (obj, newVal) -> onMainThread(
-            () -> songsRecycler.setAdapter(new CustomAdapter())
-    );
+    private Observer songObserver = (obj, newVal) -> onMainThread(updateRecycler);
+
+    // Callback for player events.
+    private MediaControllerCompat.Callback playerListener = new MediaControllerCompat.Callback() {
+        /**
+         * When the metadata is updated, get the id of the song and set it as the song currently
+         * being played.
+         *
+         * @param metadata The current metadata for the session or null if none.
+         */
+        @Override
+        public void onMetadataChanged(MediaMetadataCompat metadata) {
+            super.onMetadataChanged(metadata);
+            if (metadata == null)
+                return;
+            currentSong = metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+            onMainThread(updateRecycler);
+        }
+    };
 
     /**
      * TODO this may lead to a crash if the system tries to restore the fragment. Move client.
@@ -49,6 +79,7 @@ public class SongListFragment extends Fragment {
     public SongListFragment(PlayerClient playerClient) {
         super();
         this.playerClient = playerClient;
+        this.playerClient.setListener(playerListener);
     }
 
     /**
@@ -125,8 +156,18 @@ public class SongListFragment extends Fragment {
         @NonNull
         @Override
         public CustomHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View itemView = getLayoutInflater().inflate(R.layout.song_listview_item, parent, false);
-            return new CustomHolder(itemView);
+            if (viewType == NOW_PLAYING) {
+                View view = getLayoutInflater().inflate(R.layout.now_playing_item, parent, false);
+                ImageView nowPlayingView = view.findViewById(R.id.imageView_now_playing);
+                AnimatedVectorDrawable d = (AnimatedVectorDrawable) nowPlayingView.getDrawable();
+                d.start();
+            } else {
+
+            }
+            int layout = (viewType == NOW_PLAYING) ?
+                    R.layout.now_playing_item :
+                    R.layout.song_listview_item;
+            return new CustomHolder(getLayoutInflater().inflate(layout, parent, false));
         }
 
         /**
@@ -142,8 +183,10 @@ public class SongListFragment extends Fragment {
         }
 
         @Override
-        public long getItemId(int position) {
-            return 0;
+        public int getItemViewType(int position) {
+            if (songManager.get(position).getId().equals(currentSong))
+                return NOW_PLAYING;
+            return DEFAULT_VIEW;
         }
 
         /**

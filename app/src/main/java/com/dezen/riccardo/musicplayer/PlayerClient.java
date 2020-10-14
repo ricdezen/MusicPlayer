@@ -24,7 +24,11 @@ import com.dezen.riccardo.musicplayer.song.Song;
 public class PlayerClient {
 
     private MediaBrowserCompat mediaBrowser;
+    // TODO allow registering for mediaController callbacks
+    //  since this is initialized asynchronously, save the listener and assign it later, also
+    //  provide it the current metadata since it lost the current event.
     private MediaControllerCompat mediaController;
+    private MediaControllerCompat.Callback controllerCallback;
     private MediaBrowserCompat.ConnectionCallback callbacks;
 
     /**
@@ -43,6 +47,12 @@ public class PlayerClient {
                         activity, token
                 );
                 MediaControllerCompat.setMediaController(activity, mediaController);
+
+                // Register callbacks if they have been set.
+                if (controllerCallback != null) {
+                    mediaController.registerCallback(controllerCallback);
+                    controllerCallback.onMetadataChanged(mediaController.getMetadata());
+                }
             }
 
             @Override
@@ -79,6 +89,32 @@ public class PlayerClient {
      */
     public void disconnect() {
         mediaBrowser.disconnect();
+    }
+
+    /**
+     * Registers callbacks for the media controller. If the mediaController has not been set yet,
+     * the callbacks will be registered when it's available. When the callbacks are registered, the
+     * metadata of the song currently being played will be provided.
+     * Only one callback is allowed at a time.
+     *
+     * @param callback The callback for the Media Controller.
+     */
+    public void setListener(@NonNull MediaControllerCompat.Callback callback) {
+        clearListener();
+        controllerCallback = callback;
+        if (mediaController != null) {
+            mediaController.registerCallback(callback);
+            callback.onMetadataChanged(mediaController.getMetadata());
+        }
+    }
+
+    /**
+     * Remove the event listener.
+     */
+    public void clearListener() {
+        if (mediaController != null && controllerCallback != null)
+            mediaController.unregisterCallback(controllerCallback);
+        controllerCallback = null;
     }
 
     /**
