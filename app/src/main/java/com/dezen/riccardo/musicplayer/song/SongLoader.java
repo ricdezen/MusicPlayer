@@ -9,10 +9,10 @@ import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
 
+import com.dezen.riccardo.musicplayer.CircularBlockingDeque;
 import com.dezen.riccardo.musicplayer.Utils;
 
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -28,6 +28,7 @@ public class SongLoader {
     private static final int INITIAL_POOL_SIZE = Math.min(DEVICE_CORES, 3);
     private static final int MAX_POOL_SIZE = DEVICE_CORES + 3;
     private static final int KEEP_ALIVE_TIME = 3000;
+    private static final int MAX_QUEUE_SIZE = 25;
     private static final TimeUnit KEEP_ALIVE_UNIT = TimeUnit.MILLISECONDS;
 
 
@@ -54,7 +55,7 @@ public class SongLoader {
             MAX_POOL_SIZE,
             KEEP_ALIVE_TIME,
             KEEP_ALIVE_UNIT,
-            new LinkedBlockingDeque<>()
+            new CircularBlockingDeque<>(MAX_QUEUE_SIZE)
     );
 
     /**
