@@ -75,8 +75,10 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         // Set the Media Session as active.
         session.setActive(true);
 
-        // Play the song on the Service.
-        play(song);
+        // Return if the song cannot be played.
+        if (!play(song))
+            return;
+
         currentSongId = mediaId;
 
         // Put the Service in the foreground.
@@ -184,28 +186,37 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      * Prepare new song and play.
      *
      * @param song The song to play.
+     * @return True if the song was prepared and played successfully, false otherwise.
      */
-    private void play(Song song) {
+    private boolean play(Song song) {
         if (mediaPlayer.isPlaying())
             mediaPlayer.stop();
-        prepare(song);
+
+        if (!prepare(song))
+            return false;
+
         resume();
+        return true;
     }
 
     /**
      * Method to prepare a song to play. Resets the current mediaPlayer.
+     * If an error occurs, a Toast is displayed.
      *
      * @param song The song for which to prepare playback.
+     * @return Returns true if the media player was prepared successfully, false if an error
+     * occurred and the media cannot be played.
      */
-    public void prepare(Song song) {
+    public boolean prepare(Song song) {
         mediaPlayer.reset();
         try {
             mediaPlayer.setDataSource(service, song.getUri());
             mediaPlayer.prepare();
             session.setMetadata(song.getMetadata());
-        } catch (IOException e) {
+            return true;
+        } catch (RuntimeException | IOException e) {
             Toast.makeText(service, R.string.file_open_error, Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
+            return false;
         }
     }
 
