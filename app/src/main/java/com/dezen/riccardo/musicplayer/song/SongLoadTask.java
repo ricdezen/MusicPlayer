@@ -23,7 +23,7 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
 
     private ContentResolver contentResolver;
     private List<Song> songs = new ArrayList<>();
-    private SongLoader.Listener listener;
+    private SongLoader.SongListListener listener;
     private Cursor cursor;
 
     /**
@@ -33,7 +33,7 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
      * @param listener The listener that will receive the result.
      */
     public SongLoadTask(@NonNull Cursor cursor,
-                        @NonNull SongLoader.Listener listener,
+                        @NonNull SongLoader.SongListListener listener,
                         @NonNull ContentResolver contentResolver) {
         this.cursor = cursor;
         this.listener = listener;

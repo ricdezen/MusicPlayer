@@ -180,7 +180,13 @@ public class SongListFragment extends Fragment {
             titleView.setText(song.getTitle());
             albumView.setText(song.getAlbum());
             artistView.setText(song.getArtist());
-            imageView.setImageBitmap(songManager.getSongBitmap(song.getId(), DEFAULT_BITMAP_SIZE));
+            imageView.setImageBitmap(Utils.getDefaultThumbnail(getResources()));
+            songManager.getThumbnail(song.getId(), (id, thumbnail) -> onMainThread(() -> {
+                if (this.song.getId().equals(id))
+                    imageView.setImageBitmap(thumbnail);
+                else
+                    imageView.setImageBitmap(Utils.getDefaultThumbnail(getResources()));
+            }));
         }
     }
 }

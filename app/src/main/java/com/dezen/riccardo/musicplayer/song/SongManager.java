@@ -3,8 +3,6 @@ package com.dezen.riccardo.musicplayer.song;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.support.v4.media.MediaMetadataCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,7 +19,7 @@ import java.util.Observable;
  *
  * @author Riccardo De Zen.
  */
-public class SongManager extends Observable implements SongLoader.Listener, SongLibrary {
+public class SongManager extends Observable implements SongLoader.SongListListener, SongLibrary {
     /**
      * Only available instance of this class.
      */
@@ -149,19 +147,24 @@ public class SongManager extends Observable implements SongLoader.Listener, Song
     }
 
     /**
-     * Returns a Bitmap for a Song.
+     * Returns a Bitmap for a Song. The operation is performed asynchronously. If the song is
+     * unknown, the operation is performed synchronously immediately.
      *
-     * @param id The id of the Song.
-     * @return A Bitmap to serve as artwork for the image.
+     * @param id       The id of the Song.
+     * @param listener The callback for when the loading is done.
      */
-    @NonNull
-    public Bitmap getSongBitmap(String id) {
+    public void getThumbnail(@NonNull String id, @NonNull SongLoader.ThumbnailListener listener) {
         Song song = get(id);
-        MediaMetadataCompat metadata = (song != null) ? song.getMetadata() : null;
-        return Utils.getMediaBitmap(metadata, contentResolver, resources);
+        if (song == null) {
+            listener.onLoaded(id, Utils.getDefaultThumbnail(resources));
+            return;
+        }
+
+        songLoader.loadThumbnail(song, listener);
     }
 
     /**
+     * TODO
      * Returns a Bitmap for a Song, resizing it if needed. It will resize keeping aspect ratio, the
      * resulting image will have {@code size} on its smaller dimension.
      *
@@ -169,7 +172,7 @@ public class SongManager extends Observable implements SongLoader.Listener, Song
      * @param size The size for the output image.
      * @return A Bitmap to serve as artwork for the image.
      */
-    @NonNull
+    /*@NonNull
     public Bitmap getSongBitmap(String id, int size) {
         Bitmap baseImage = getSongBitmap(id);
         int width = baseImage.getWidth();
@@ -183,7 +186,7 @@ public class SongManager extends Observable implements SongLoader.Listener, Song
             height = (int) Math.round(size * aspectRatio);
         }
         return Bitmap.createScaledBitmap(baseImage, width, height, true);
-    }
+    }*/
 
     /**
      * Method used to update the song list. A new List will be created and used when replacing
