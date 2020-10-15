@@ -1,6 +1,5 @@
 package com.dezen.riccardo.musicplayer.song;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
 
@@ -25,13 +24,12 @@ public class SongManager extends Observable implements SongLoader.SongListListen
      */
     private static SongManager activeInstance;
 
-    private ContentResolver contentResolver;
-    private Resources resources;
+    private final Resources resources;
 
     private List<Song> songList;
-    private HashMap<String, Song> idMap;
-    private HashMap<String, Integer> indexMap;
-    private SongLoader songLoader;
+    private final HashMap<String, Song> idMap;
+    private final HashMap<String, Integer> indexMap;
+    private final SongLoader songLoader;
 
     /**
      * The private constructor.
@@ -41,7 +39,6 @@ public class SongManager extends Observable implements SongLoader.SongListListen
     private SongManager(Context context) {
         resources = context.getResources();
         songLoader = SongLoader.getInstance(context);
-        contentResolver = context.getContentResolver();
 
         // The list of songs starts as empty.
         songList = new ArrayList<>();

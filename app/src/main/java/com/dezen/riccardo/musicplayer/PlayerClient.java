@@ -29,13 +29,9 @@ public class PlayerClient {
 
     private static final Map<Integer, PlayerClient> instancePool = new HashMap<>();
 
-    private MediaBrowserCompat mediaBrowser;
-    // TODO allow registering for mediaController callbacks
-    //  since this is initialized asynchronously, save the listener and assign it later, also
-    //  provide it the current metadata since it lost the current event.
+    private final MediaBrowserCompat mediaBrowser;
     private MediaControllerCompat mediaController;
     private MediaControllerCompat.Callback controllerCallback;
-    private MediaBrowserCompat.ConnectionCallback callbacks;
 
     /**
      * @param context The {@link Context} hosting the media player. If it is an Activity, it will
@@ -43,17 +39,18 @@ public class PlayerClient {
      */
     private PlayerClient(@NonNull Context context) {
         // Defining callbacks.
-        callbacks = new MediaBrowserCompat.ConnectionCallback() {
-            @Override
-            public void onConnected() {
-                // Will be non-null when this method is called.
-                MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
+        MediaBrowserCompat.ConnectionCallback callbacks =
+                new MediaBrowserCompat.ConnectionCallback() {
+                    @Override
+                    public void onConnected() {
+                        // Will be non-null when this method is called.
+                        MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
 
-                // Initialize the media controller.
-                mediaController = new MediaControllerCompat(
-                        context, token
-                );
-                if (context instanceof Activity)
+                        // Initialize the media controller.
+                        mediaController = new MediaControllerCompat(
+                                context, token
+                        );
+                        if (context instanceof Activity)
                     MediaControllerCompat.setMediaController((Activity) context, mediaController);
 
                 // Register callbacks if they have been set.
