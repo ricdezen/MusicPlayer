@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         setSupportActionBar(findViewById(R.id.toolbar));
         ensureNotificationServiceExists();
-        playerClient = new PlayerClient(this);
+        playerClient = PlayerClient.of(this);
         if (checkPermissions()) {
             init();
         }
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, new SongListFragment(playerClient));
+        transaction.replace(R.id.fragment_container, new SongListFragment());
         transaction.commit();
     }
 }

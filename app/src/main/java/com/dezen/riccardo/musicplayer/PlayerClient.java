@@ -2,6 +2,7 @@ package com.dezen.riccardo.musicplayer;
 
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Context;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -12,16 +13,21 @@ import androidx.annotation.NonNull;
 
 import com.dezen.riccardo.musicplayer.song.Song;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Class used to simplify MediaBrowserClient usage. Communicates with a {@link PlayerService}. It
- * instantiates the Service automatically and triggers a callback when the Service is connected, use
- * it to know when you can enable UI controls.
+ * Class used to simplify MediaBrowserClient usage. Communicates with a {@link PlayerService}.
  * {@link PlayerClient#connect()} should be called when the host Activity is started.
  * {@link PlayerClient#disconnect()} should be called when the Activity is stopped.
+ * The class is an Object pool, only one client is allowed for a certain Context. Context are not
+ * referenced directly, their hashcode is used instead.
  *
  * @author Riccardo De Zen.
  */
 public class PlayerClient {
+
+    private static final Map<Integer, PlayerClient> instancePool = new HashMap<>();
 
     private MediaBrowserCompat mediaBrowser;
     // TODO allow registering for mediaController callbacks
@@ -32,9 +38,10 @@ public class PlayerClient {
     private MediaBrowserCompat.ConnectionCallback callbacks;
 
     /**
-     * @param activity The {@link Activity} hosting the media player.
+     * @param context The {@link Context} hosting the media player. If it is an Activity, it will
+     *                be set in the MediaController.
      */
-    public PlayerClient(@NonNull Activity activity) {
+    private PlayerClient(@NonNull Context context) {
         // Defining callbacks.
         callbacks = new MediaBrowserCompat.ConnectionCallback() {
             @Override
@@ -44,9 +51,10 @@ public class PlayerClient {
 
                 // Initialize the media controller.
                 mediaController = new MediaControllerCompat(
-                        activity, token
+                        context, token
                 );
-                MediaControllerCompat.setMediaController(activity, mediaController);
+                if (context instanceof Activity)
+                    MediaControllerCompat.setMediaController((Activity) context, mediaController);
 
                 // Register callbacks if they have been set.
                 if (controllerCallback != null) {
@@ -58,23 +66,39 @@ public class PlayerClient {
             @Override
             public void onConnectionFailed() {
                 super.onConnectionFailed();
-                Toast.makeText(activity, R.string.connection_failed_error, Toast.LENGTH_LONG).show();
+                Toast.makeText(context, R.string.connection_failed_error, Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void onConnectionSuspended() {
                 super.onConnectionSuspended();
-                Toast.makeText(activity, R.string.service_shut_down_warning, Toast.LENGTH_LONG).show();
+                Toast.makeText(context, R.string.service_shut_down_warning, Toast.LENGTH_LONG).show();
             }
         };
 
         // Initialize MediaBrowser.
         mediaBrowser = new MediaBrowserCompat(
-                activity,
-                new ComponentName(activity, PlayerService.class),
+                context,
+                new ComponentName(context, PlayerService.class),
                 callbacks,
                 null
         );
+    }
+
+    /**
+     * Retrieve the PlayerClient for a certain Context. If the Context is an Activity, the
+     * MediaController in this object will be recorded as the controller for the Activity.
+     *
+     * @param context The calling Context.
+     * @return The PlayerClient instance for the Context, if existing, or a newly created one.
+     */
+    public static PlayerClient of(@NonNull Context context) {
+        PlayerClient instance = instancePool.get(context.hashCode());
+        if (instance != null)
+            return instance;
+        PlayerClient newInstance = new PlayerClient(context);
+        instancePool.put(context.hashCode(), newInstance);
+        return newInstance;
     }
 
     /**

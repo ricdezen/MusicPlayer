@@ -88,18 +88,6 @@ public class SongListFragment extends Fragment {
     };
 
     /**
-     * TODO this may lead to a crash if the system tries to restore the fragment. Move client.
-     * Create a new Fragment attached to a client for the app's Service.
-     *
-     * @param playerClient The client.
-     */
-    public SongListFragment(PlayerClient playerClient) {
-        super();
-        this.playerClient = playerClient;
-        this.playerClient.setListener(playerListener);
-    }
-
-    /**
      * Initializes the {@link SongManager}.
      *
      * @param context The Context that hosts the Fragment.
@@ -108,6 +96,8 @@ public class SongListFragment extends Fragment {
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         songManager = SongManager.getInstance(context);
+        playerClient = PlayerClient.of(context);
+        playerClient.setListener(playerListener);
     }
 
     /**
