@@ -65,9 +65,8 @@ public class SongListFragment extends Fragment {
         @Override
         public void onMetadataChanged(MediaMetadataCompat metadata) {
             super.onMetadataChanged(metadata);
-            if (metadata == null)
-                return;
-            currentSong = metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+            currentSong = (metadata == null) ? null :
+                    metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
             onMainThread(updateRecycler);
         }
 

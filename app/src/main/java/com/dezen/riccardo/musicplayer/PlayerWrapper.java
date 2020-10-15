@@ -220,6 +220,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
             return true;
         } catch (RuntimeException | IOException e) {
             Toast.makeText(service, R.string.file_open_error, Toast.LENGTH_SHORT).show();
+            session.setMetadata(null);
             return false;
         }
     }
