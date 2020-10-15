@@ -9,8 +9,8 @@ import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
 
-import com.dezen.riccardo.musicplayer.CircularBlockingDeque;
-import com.dezen.riccardo.musicplayer.Utils;
+import com.dezen.riccardo.musicplayer.utils.CircularBlockingDeque;
+import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;

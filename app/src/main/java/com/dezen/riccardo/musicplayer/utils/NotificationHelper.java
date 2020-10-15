@@ -1,4 +1,4 @@
-package com.dezen.riccardo.musicplayer;
+package com.dezen.riccardo.musicplayer.utils;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -16,6 +16,9 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.media.session.MediaButtonReceiver;
+
+import com.dezen.riccardo.musicplayer.PlayerService;
+import com.dezen.riccardo.musicplayer.R;
 
 /**
  * Class dedicated to ensuring the Notification channel is set up (if necessary) and building the

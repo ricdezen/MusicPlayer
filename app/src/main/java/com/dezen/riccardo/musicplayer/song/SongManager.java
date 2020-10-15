@@ -7,7 +7,7 @@ import android.content.res.Resources;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.dezen.riccardo.musicplayer.Utils;
+import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,4 +1,4 @@
-package com.dezen.riccardo.musicplayer;
+package com.dezen.riccardo.musicplayer.utils;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -15,6 +15,8 @@ import android.support.v4.media.MediaMetadataCompat;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
+
+import com.dezen.riccardo.musicplayer.R;
 
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;

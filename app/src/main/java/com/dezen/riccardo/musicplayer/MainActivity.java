@@ -12,6 +12,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.dezen.riccardo.musicplayer.utils.NotificationHelper;
+
 /**
  * Main Activity of the app, asks for permissions and shows the song list fragment.
  *

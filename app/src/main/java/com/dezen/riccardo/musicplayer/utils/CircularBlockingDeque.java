@@ -1,4 +1,4 @@
-package com.dezen.riccardo.musicplayer;
+package com.dezen.riccardo.musicplayer.utils;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;

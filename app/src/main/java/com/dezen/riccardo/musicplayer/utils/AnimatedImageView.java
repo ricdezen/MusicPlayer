@@ -1,4 +1,4 @@
-package com.dezen.riccardo.musicplayer;
+package com.dezen.riccardo.musicplayer.utils;
 
 import android.content.Context;
 import android.graphics.Canvas;

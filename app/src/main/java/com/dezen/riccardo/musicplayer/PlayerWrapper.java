@@ -9,6 +9,8 @@ import android.widget.Toast;
 
 import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
+import com.dezen.riccardo.musicplayer.utils.NotificationHelper;
+import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.io.IOException;
 

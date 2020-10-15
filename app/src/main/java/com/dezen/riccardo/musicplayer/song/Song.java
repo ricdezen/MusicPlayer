@@ -8,16 +8,17 @@ import android.support.v4.media.MediaMetadataCompat;
 import androidx.annotation.NonNull;
 
 import com.dezen.riccardo.musicplayer.Filterable;
-import com.dezen.riccardo.musicplayer.Utils;
+import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Class containing the data for a single Song.
  *
  * @author Riccardo De Zen.
  */
-public class Song implements Filterable<String> {
+public final class Song implements Filterable<String>, Comparable<Song> {
 
     public static final String[] META_COLUMNS = {
             MediaMetadataCompat.METADATA_KEY_MEDIA_ID,
@@ -109,5 +110,33 @@ public class Song implements Filterable<String> {
     @Override
     public boolean matches(String query) {
         return getTitle().contains(query);
+    }
+
+    /**
+     * @param o The other song.
+     * @return True if the songs have the same id. False if the other Object is not a Song, is
+     * null, or has a different id.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Song song = (Song) o;
+        return getId().equals(song.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
+    }
+
+    /**
+     * @param song The song to compare with this.
+     * @return Compares the titles of the two Songs. Which means that by default, songs are sorted
+     * by title.
+     */
+    @Override
+    public int compareTo(@NonNull Song song) {
+        return this.getId().compareTo(song.getTitle());
     }
 }

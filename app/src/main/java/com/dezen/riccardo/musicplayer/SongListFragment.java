@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
+import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.util.Observer;
 

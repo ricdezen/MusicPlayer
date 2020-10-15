@@ -1,5 +1,7 @@
 package com.dezen.riccardo.musicplayer;
 
+import com.dezen.riccardo.musicplayer.utils.Utils;
+
 import junit.framework.TestCase;
 
 import org.junit.Test;
