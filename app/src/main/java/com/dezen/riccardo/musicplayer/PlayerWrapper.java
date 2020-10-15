@@ -42,6 +42,8 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         this.library = library;
         this.service = service;
         this.mediaPlayer = new MediaPlayer();
+        // TODO Temporary
+        this.mediaPlayer.setOnCompletionListener((mp) -> onSkipToNext());
         this.session = service.getMediaSession();
         this.notificationHelper = NotificationHelper.getInstance(service);
 
@@ -120,6 +122,8 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     @Override
     public void onPause() {
         super.onPause();
+        if (!mediaPlayer.isPlaying())
+            return;
         pause();
         // Stop being in the foreground.
         service.stopForeground(false);
@@ -135,7 +139,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         super.onStop();
         stop();
         session.setActive(false);
-        service.stopForeground(false);
+        service.stopForeground(true);
         service.stopSelf();
     }
 
@@ -248,6 +252,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
 
     /**
      * Method to stop the playback of a song.
+     * TODO this kinda screws up further playback.
      */
     public void stop() {
         mediaPlayer.stop();

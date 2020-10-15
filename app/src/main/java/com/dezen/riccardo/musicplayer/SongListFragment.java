@@ -1,12 +1,12 @@
 package com.dezen.riccardo.musicplayer;
 
 import android.content.Context;
-import android.graphics.drawable.AnimatedVectorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,8 +33,9 @@ public class SongListFragment extends Fragment {
     // TODO remove, think of something better.
     private static final int DEFAULT_BITMAP_SIZE = 128;
 
-    private static final int NOW_PLAYING = 1;
     private static final int DEFAULT_VIEW = 0;
+    private static final int NOW_PLAYING = 1;
+    private static final int NOW_PAUSED = 2;
 
     private PlayerClient playerClient;
     private SongManager songManager;
@@ -42,6 +43,7 @@ public class SongListFragment extends Fragment {
     private View rootView;
 
     private String currentSong;
+    private int currentState = 0;
 
     // Runnable to update recycler.
     private Runnable updateRecycler = () -> {
@@ -66,6 +68,21 @@ public class SongListFragment extends Fragment {
             if (metadata == null)
                 return;
             currentSong = metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+            onMainThread(updateRecycler);
+        }
+
+        /**
+         * When the player state changes, so do the views for the currently playing song.
+         *
+         * @param state The new state.
+         */
+        @Override
+        public void onPlaybackStateChanged(PlaybackStateCompat state) {
+            super.onPlaybackStateChanged(state);
+            if (state.getState() == PlaybackStateCompat.STATE_PLAYING)
+                currentState = NOW_PLAYING;
+            else
+                currentState = NOW_PAUSED;
             onMainThread(updateRecycler);
         }
     };
@@ -156,17 +173,18 @@ public class SongListFragment extends Fragment {
         @NonNull
         @Override
         public CustomHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            if (viewType == NOW_PLAYING) {
-                View view = getLayoutInflater().inflate(R.layout.now_playing_item, parent, false);
-                ImageView nowPlayingView = view.findViewById(R.id.imageView_now_playing);
-                AnimatedVectorDrawable d = (AnimatedVectorDrawable) nowPlayingView.getDrawable();
-                d.start();
-            } else {
-
+            int layout;
+            switch (viewType) {
+                case NOW_PLAYING:
+                    layout = R.layout.now_playing_item;
+                    break;
+                case NOW_PAUSED:
+                    layout = R.layout.now_paused_item;
+                    break;
+                default:
+                    layout = R.layout.song_listview_item;
+                    break;
             }
-            int layout = (viewType == NOW_PLAYING) ?
-                    R.layout.now_playing_item :
-                    R.layout.song_listview_item;
             return new CustomHolder(getLayoutInflater().inflate(layout, parent, false));
         }
 
@@ -185,7 +203,7 @@ public class SongListFragment extends Fragment {
         @Override
         public int getItemViewType(int position) {
             if (songManager.get(position).getId().equals(currentSong))
-                return NOW_PLAYING;
+                return currentState;
             return DEFAULT_VIEW;
         }
 
