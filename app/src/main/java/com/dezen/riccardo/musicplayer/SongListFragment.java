@@ -44,7 +44,7 @@ public class SongListFragment extends Fragment {
     private View rootView;
 
     // PlayList is empty. Will be loaded when the Manager is available.
-    private PlayList currentPlayList = new PlayList();
+    private PlayList library = new PlayList();
     private String currentSong;
     private int currentState = 0;
 
@@ -56,7 +56,7 @@ public class SongListFragment extends Fragment {
 
     // When songs are updated, update List.
     private final Observer songObserver = (obj, newVal) -> {
-        currentPlayList = (PlayList) newVal;
+        library = (PlayList) newVal;
         onMainThread(updateRecycler);
     };
 
@@ -102,7 +102,7 @@ public class SongListFragment extends Fragment {
         public void onManagerAvailable(@NonNull SongManager manager) {
             songManager = manager;
             songManager.addObserver(songObserver);
-            currentPlayList = songManager.getLibrary();
+            library = songManager.getLibrary();
             onMainThread(updateRecycler);
         }
     };
@@ -202,12 +202,12 @@ public class SongListFragment extends Fragment {
          */
         @Override
         public void onBindViewHolder(@NonNull CustomHolder holder, int position) {
-            holder.populate(currentPlayList.get(position));
+            holder.populate(library.get(position));
         }
 
         @Override
         public int getItemViewType(int position) {
-            if (currentPlayList.get(position).getId().equals(currentSong))
+            if (library.get(position).getId().equals(currentSong))
                 return currentState;
             return DEFAULT_VIEW;
         }
@@ -219,7 +219,7 @@ public class SongListFragment extends Fragment {
          */
         @Override
         public int getItemCount() {
-            return currentPlayList.size();
+            return library.size();
         }
     }
 

@@ -16,7 +16,6 @@ import com.dezen.riccardo.musicplayer.utils.NotificationHelper;
 import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.io.IOException;
-import java.util.Observer;
 
 public class PlayerWrapper extends MediaSessionCompat.Callback {
 
@@ -27,24 +26,27 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
             PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
     };
 
+    // Current Song.
+    private String currentSongId;
     // Current PlayList.
     private PlayList currentPlayList;
+
+    // SongManager.
+    private final SongManager songManager;
     // The Service to manage.
     private final PlayerService service;
     // MediaSession of the Service.
     private final MediaSessionCompat session;
     // Notification Helper.
     private final NotificationHelper notificationHelper;
-    // Current Song.
-    private String currentSongId;
     // The media player.
     private final MediaPlayer mediaPlayer;
     // PlaybackStateBuilder.
     private final PlaybackStateCompat.Builder playbackStateBuilder;
 
-    private final Observer updateObserver = (o, obj) -> {
+    private SongManager.PlayListObserver playListObserver = (newPL) -> {
         synchronized (PlayerWrapper.this) {
-            currentPlayList = (PlayList) obj;
+            currentPlayList = newPL;
         }
     };
 
@@ -57,9 +59,9 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     public PlayerWrapper(@NonNull PlayerService service) {
         // Reference SongManager for this Session.
         // The full library of Songs.
-        SongManager songManager = SongManager.of(service.getSessionToken(), service);
-        songManager.addObserver(updateObserver);
-        this.currentPlayList = songManager.getLibrary();
+        songManager = SongManager.of(service.getSessionToken(), service);
+        songManager.observePlayList(playListObserver);
+        this.currentPlayList = songManager.getPlayList();
 
         // Service and session.
         this.service = service;
@@ -223,6 +225,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      */
     public synchronized void release() {
         stop();
+        songManager.removeObserver(playListObserver);
         mediaPlayer.release();
     }
 

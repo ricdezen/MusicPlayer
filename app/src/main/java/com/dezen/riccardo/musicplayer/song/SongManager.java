@@ -13,9 +13,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
+import java.util.Set;
 
 /**
- * Class defining the shared data shared among the app.
+ * Class defining the shared data shared among the app. Any Object can observe the Manager for
+ * changes in the library, or in the current view for the associated Players.
  * SongManager instances must be freed after use, ideally when the Service is destroyed, along with
  * its session.
  *
@@ -27,9 +29,14 @@ public class SongManager extends Observable implements SongLoader.SongListListen
      */
     private static final Map<MediaSessionCompat.Token, SongManager> instancePool = new HashMap<>();
 
-    private final Resources resources;
+    // Observers for the PlayList.
+    private final Set<PlayListObserver> playListObservers = new HashSet<>();
 
+    // Keep null until something is set. If null return library when asking for PL.
+    private PlayList currentPlayList;
     private PlayList songLibrary;
+
+    private final Resources resources;
     private final SongLoader songLoader;
     private final MediaSessionCompat.Token token;
 
@@ -90,6 +97,34 @@ public class SongManager extends Observable implements SongLoader.SongListListen
     }
 
     /**
+     * @return The current PlayList.
+     */
+    @NonNull
+    public synchronized PlayList getPlayList() {
+        return (currentPlayList == null) ? songLibrary : currentPlayList;
+    }
+
+    /**
+     * Sets a new PlayList. Must be a Subset of the full library. If it isn't, no checks are
+     * performed on its integrity, have fun. The MediaPlayers listening to changes will be notified
+     * of this change.
+     *
+     * @param newPlayList The new PlayList.
+     */
+    public synchronized void setPlayList(@NonNull PlayList newPlayList) {
+        currentPlayList = newPlayList;
+        notifyPlayListObservers();
+    }
+
+    /**
+     * Resets the PlayList to the whole library.
+     */
+    public synchronized void resetPlayList() {
+        currentPlayList = null;
+        notifyPlayListObservers();
+    }
+
+    /**
      * Returns a Bitmap for a Song. The operation is performed asynchronously. If the song is
      * unknown, the operation is performed synchronously immediately.
      *
@@ -144,5 +179,39 @@ public class SongManager extends Observable implements SongLoader.SongListListen
             setChanged();
         }
         notifyObservers(songLibrary);
+        // If the currentPlayList is null, observers believe the full library is the playlist.
+        if (currentPlayList == null)
+            notifyPlayListObservers();
+    }
+
+    /**
+     * @param newObserver The new Object observing changes in the PlayList.
+     */
+    public void observePlayList(@NonNull PlayListObserver newObserver) {
+        playListObservers.add(newObserver);
+    }
+
+    /**
+     * @param observer The Observer to remove.
+     */
+    public void removeObserver(@NonNull PlayListObserver observer) {
+        playListObservers.remove(observer);
+    }
+
+    /**
+     * Notify the PlayListObservers there has been a change in the PlayList.
+     */
+    protected void notifyPlayListObservers() {
+        for (PlayListObserver o : playListObservers)
+            o.onChanged(getPlayList());
+    }
+
+    public interface PlayListObserver {
+        /**
+         * Called when the a new PlayList is set.
+         *
+         * @param newPlayList The new PlayList.
+         */
+        void onChanged(@NonNull PlayList newPlayList);
     }
 }
