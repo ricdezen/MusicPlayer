@@ -31,8 +31,6 @@ import java.util.Observer;
  * @author Riccardo De Zen.
  */
 public class SongListFragment extends Fragment {
-    // TODO remove, think of something better.
-    private static final int DEFAULT_BITMAP_SIZE = 128;
 
     private static final int DEFAULT_VIEW = 0;
     private static final int NOW_PLAYING = 1;
