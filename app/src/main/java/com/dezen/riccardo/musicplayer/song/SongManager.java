@@ -3,6 +3,7 @@ package com.dezen.riccardo.musicplayer.song;
 import android.content.Context;
 import android.content.res.Resources;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.util.Size;
 
 import androidx.annotation.NonNull;
 
@@ -149,7 +150,7 @@ public class SongManager extends Observable implements SongLoader.SongListListen
      * @param size     The target size.
      * @param listener The callback for when the loading is done.
      */
-    public void getThumbnail(@NonNull String id, int size,
+    public void getThumbnail(@NonNull String id, Size size,
                              @NonNull SongLoader.ThumbnailListener listener) {
         // Wrap the listener to resize the result.
         getThumbnail(id, (resultId, thumbnail) ->

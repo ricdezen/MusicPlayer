@@ -11,6 +11,8 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.support.v4.media.MediaMetadataCompat;
+import android.util.Size;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,8 +28,11 @@ import java.util.Map;
 
 public class Utils {
 
-    private static MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-    private static int defaultImage = R.drawable.song_icon;
+    private static final MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+    private static final int DEFAULT_IMAGE = R.drawable.song_icon;
+    private static final int DEFAULT_WIDTH = 128;
+    private static final int DEFAULT_HEIGHT = 128;
+
 
     private static Drawable defaultDrawable;
     private static Bitmap defaultBitmap;
@@ -93,7 +98,7 @@ public class Utils {
      */
     public static Drawable getDefaultArtwork(@NonNull Resources resources) {
         if (defaultDrawable == null)
-            defaultDrawable = ResourcesCompat.getDrawable(resources, defaultImage, null);
+            defaultDrawable = ResourcesCompat.getDrawable(resources, DEFAULT_IMAGE, null);
         return defaultDrawable;
     }
 
@@ -131,19 +136,36 @@ public class Utils {
      * @param size      The size the smaller side should have after resizing.
      * @return The resized Bitmap.
      */
-    public static Bitmap resizeThumbnail(@NonNull Bitmap thumbnail, int size) {
+    public static Bitmap resizeThumbnail(@NonNull Bitmap thumbnail, Size size) {
         int width = thumbnail.getWidth();
         int height = thumbnail.getHeight();
         int newWidth, newHeight;
         double aspectRatio = (1.0 * width) / (1.0 * height);
         if (width > height) {
-            newHeight = size;
-            newWidth = (int) Math.round(size * aspectRatio);
+            newHeight = size.getHeight();
+            newWidth = (int) Math.round(size.getWidth() * aspectRatio);
         } else {
-            newWidth = size;
-            newHeight = (int) Math.round(size * aspectRatio);
+            newWidth = size.getWidth();
+            newHeight = (int) Math.round(size.getHeight() * aspectRatio);
         }
         return Bitmap.createScaledBitmap(thumbnail, newWidth, newHeight, true);
+    }
+
+    /**
+     * Get size for the Thumbnail.
+     *
+     * @param imageView ImageView containing Thumbnail.
+     * @return Either the size of the ImageView or a default 128 by 128 if the ImageView is 0 in
+     * either width or height.
+     */
+    public static Size getThumbnailSize(@NonNull ImageView imageView) {
+        int width = imageView.getWidth();
+        int height = imageView.getHeight();
+
+        if (width == 0 || height == 0)
+            return new Size(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+
+        return new Size(width, height);
     }
 
     /**
