@@ -33,8 +33,8 @@ public class NotificationHelper {
     private static NotificationHelper activeInstance;
 
     @NonNull
-    private NotificationManagerCompat notificationManager;
-    private Resources resources;
+    private final NotificationManagerCompat notificationManager;
+    private final Resources resources;
 
     /**
      * Private constructor. The Notification Manager must be available.

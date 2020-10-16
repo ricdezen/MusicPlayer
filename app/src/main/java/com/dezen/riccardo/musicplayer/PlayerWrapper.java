@@ -7,12 +7,16 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
+import com.dezen.riccardo.musicplayer.song.PlayList;
 import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
 import com.dezen.riccardo.musicplayer.utils.NotificationHelper;
 import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.io.IOException;
+import java.util.Observer;
 
 public class PlayerWrapper extends MediaSessionCompat.Callback {
 
@@ -23,30 +27,50 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
             PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
     };
 
-    // The full library of Songs.
-    private SongManager library;
+    // Current PlayList.
+    private PlayList currentPlayList;
     // The Service to manage.
-    private PlayerService service;
+    private final PlayerService service;
     // MediaSession of the Service.
-    private MediaSessionCompat session;
+    private final MediaSessionCompat session;
     // Notification Helper.
-    private NotificationHelper notificationHelper;
+    private final NotificationHelper notificationHelper;
     // Current Song.
     private String currentSongId;
     // The media player.
-    private MediaPlayer mediaPlayer;
+    private final MediaPlayer mediaPlayer;
     // PlaybackStateBuilder.
-    private PlaybackStateCompat.Builder playbackStateBuilder;
+    private final PlaybackStateCompat.Builder playbackStateBuilder;
 
-    // TODO change SongManager to SongLibrary.
-    // Sets the state of the service's session, is this a good idea?
-    public PlayerWrapper(SongManager library, PlayerService service) {
-        this.library = library;
+    private final Observer updateObserver = (o, obj) -> {
+        synchronized (PlayerWrapper.this) {
+            currentPlayList = (PlayList) obj;
+        }
+    };
+
+    /**
+     * Construct a Player for a certain Service, it retrieves the contents of the SongManager for
+     * the Service's MediaSession.
+     *
+     * @param service The Service hosting the Player. Used as context.
+     */
+    public PlayerWrapper(@NonNull PlayerService service) {
+        // Reference SongManager for this Session.
+        // The full library of Songs.
+        SongManager songManager = SongManager.of(service.getSessionToken(), service);
+        songManager.addObserver(updateObserver);
+        this.currentPlayList = songManager.getAllSongs();
+
+        // Service and session.
         this.service = service;
-        this.mediaPlayer = new MediaPlayer();
-        // TODO Temporary
-        this.mediaPlayer.setOnCompletionListener((mp) -> onSkipToNext());
         this.session = service.getMediaSession();
+
+        // Media Player.
+        this.mediaPlayer = new MediaPlayer();
+        // TODO By default, skip to next on completion.
+        this.mediaPlayer.setOnCompletionListener((mp) -> onSkipToNext());
+
+        // Notification Utils.
         this.notificationHelper = NotificationHelper.getInstance(service);
 
         // Setup PlaybackStateBuilder.
@@ -65,11 +89,11 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      * @param extras  Ignored.
      */
     @Override
-    public void onPlayFromMediaId(String mediaId, Bundle extras) {
+    public synchronized void onPlayFromMediaId(String mediaId, Bundle extras) {
         super.onPlayFromMediaId(mediaId, extras);
 
         // Return if song is not found.
-        Song song = library.get(mediaId);
+        Song song = currentPlayList.get(mediaId);
         if (song == null)
             return;
 
@@ -98,7 +122,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      * TODO : Audio Focus, noisy
      */
     @Override
-    public void onPlay() {
+    public synchronized void onPlay() {
         super.onPlay();
 
         // Start (or restart) the Service.
@@ -122,7 +146,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      * TODO noisy
      */
     @Override
-    public void onPause() {
+    public synchronized void onPause() {
         super.onPause();
         if (!mediaPlayer.isPlaying())
             return;
@@ -137,7 +161,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      * The Media session received a stop command.
      */
     @Override
-    public void onStop() {
+    public synchronized void onStop() {
         super.onStop();
         stop();
         session.setActive(false);
@@ -149,13 +173,13 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      * Skip to the next Song.
      */
     @Override
-    public void onSkipToNext() {
+    public synchronized void onSkipToNext() {
         super.onSkipToNext();
 
         if (currentSongId == null)
             return;
 
-        Song song = library.next(currentSongId);
+        Song song = currentPlayList.next(currentSongId);
         if (song == null)
             return;
 
@@ -166,13 +190,13 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      * Skip to the previous Song.
      */
     @Override
-    public void onSkipToPrevious() {
+    public synchronized void onSkipToPrevious() {
         super.onSkipToPrevious();
 
         if (currentSongId == null)
             return;
 
-        Song song = library.previous(currentSongId);
+        Song song = currentPlayList.previous(currentSongId);
         if (song == null)
             return;
 
@@ -180,10 +204,24 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     }
 
     /**
-     * TODO
-     * Release the resources associated with this player.
+     * Custom actions. Actions allowed:
+     * - "SET_PLAYLIST": Provide a playlist's name in the extras. The Playlist must be available
+     * in {@link }. If not, nothing will be done.
+     * TODO add class name.
+     *
+     * @param action Action String.
+     * @param extras Extras for the Action.
      */
-    public void release() {
+    @Override
+    public void onCustomAction(String action, Bundle extras) {
+        super.onCustomAction(action, extras);
+    }
+
+    /**
+     * TODO Stop observing, somehow release SongManager.
+     * Release the resources associated with this player, the Player cannot be used anymore.
+     */
+    public synchronized void release() {
         stop();
         mediaPlayer.release();
     }
@@ -194,7 +232,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      * @param song The song to play.
      * @return True if the song was prepared and played successfully, false otherwise.
      */
-    private boolean play(Song song) {
+    private synchronized boolean play(Song song) {
         if (mediaPlayer.isPlaying())
             mediaPlayer.stop();
 
@@ -213,7 +251,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      * @return Returns true if the media player was prepared successfully, false if an error
      * occurred and the media cannot be played.
      */
-    public boolean prepare(Song song) {
+    public synchronized boolean prepare(Song song) {
         mediaPlayer.reset();
         try {
             mediaPlayer.setDataSource(service, song.getUri());
@@ -230,7 +268,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     /**
      * Method to pause the playback of a song.
      */
-    public void pause() {
+    public synchronized void pause() {
         mediaPlayer.pause();
         session.setPlaybackState(playbackStateBuilder.setState(
                 PlaybackStateCompat.STATE_PAUSED,
@@ -243,7 +281,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     /**
      * Resume playback without changing the song.
      */
-    public void resume() {
+    public synchronized void resume() {
         mediaPlayer.start();
         session.setPlaybackState(playbackStateBuilder.setState(
                 PlaybackStateCompat.STATE_PLAYING,
@@ -257,7 +295,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      * Method to stop the playback of a song.
      * TODO this kinda screws up further playback.
      */
-    public void stop() {
+    public synchronized void stop() {
         mediaPlayer.stop();
         session.setPlaybackState(playbackStateBuilder.setState(
                 PlaybackStateCompat.STATE_STOPPED,

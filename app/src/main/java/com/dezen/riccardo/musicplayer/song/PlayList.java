@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -23,14 +24,24 @@ public class PlayList {
     private final HashMap<String, Integer> indexById = new HashMap<>();
 
     /**
+     * TODO add, remove, etc to make the PlayList be usable even when empty.
+     * Empty PlayList, currently just a placeholder.
+     */
+    public PlayList() {
+
+    }
+
+    /**
      * @param content A Set of Songs. The playlist will contain these.
      */
     public PlayList(Set<Song> content) {
         for (Song song : content) {
             songs.add(song);
             songById.put(song.getId(), song);
-            indexById.put(song.getId(), songs.size() - 1);
         }
+        Collections.sort(songs);
+        for (int i = 0; i < songs.size(); i++)
+            indexById.put(songs.get(i).getId(), i);
     }
 
     /**

@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +18,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.dezen.riccardo.musicplayer.song.PlayList;
 import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
 import com.dezen.riccardo.musicplayer.utils.Utils;
@@ -43,20 +43,26 @@ public class SongListFragment extends Fragment {
     private RecyclerView songsRecycler;
     private View rootView;
 
+    // PlayList is empty. Will be loaded when the Manager is available.
+    private PlayList currentPlayList = new PlayList();
     private String currentSong;
     private int currentState = 0;
 
     // Runnable to update recycler.
-    private Runnable updateRecycler = () -> {
+    private final Runnable updateRecycler = () -> {
         if (songsRecycler.getAdapter() != null)
             songsRecycler.getAdapter().notifyDataSetChanged();
     };
 
     // When songs are updated, update List.
-    private Observer songObserver = (obj, newVal) -> onMainThread(updateRecycler);
+    private final Observer songObserver = (obj, newVal) -> {
+        currentPlayList = (PlayList) newVal;
+        onMainThread(updateRecycler);
+    };
 
     // Callback for player events.
-    private MediaControllerCompat.Callback playerListener = new MediaControllerCompat.Callback() {
+    private final PlayerClient.Callback playerListener = new PlayerClient.Callback() {
+
         /**
          * When the metadata is updated, get the id of the song and set it as the song currently
          * being played.
@@ -85,6 +91,20 @@ public class SongListFragment extends Fragment {
                 currentState = NOW_PAUSED;
             onMainThread(updateRecycler);
         }
+
+        /**
+         * Method called after the connection has been established, providing the SongManager that
+         * acts as a view to the whole Song library.
+         *
+         * @param manager The SongManager that just became available.
+         */
+        @Override
+        public void onManagerAvailable(@NonNull SongManager manager) {
+            songManager = manager;
+            songManager.addObserver(songObserver);
+            currentPlayList = songManager.getAllSongs();
+            onMainThread(updateRecycler);
+        }
     };
 
     /**
@@ -95,9 +115,8 @@ public class SongListFragment extends Fragment {
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        songManager = SongManager.getInstance(context);
         playerClient = PlayerClient.of(context);
-        playerClient.setListener(playerListener);
+        playerClient.setListener(playerListener, context);
     }
 
     /**
@@ -126,10 +145,6 @@ public class SongListFragment extends Fragment {
         songsRecycler = rootView.findViewById(R.id.songs_recycler);
         songsRecycler.setLayoutManager(new LinearLayoutManager(getContext()));
         songsRecycler.setAdapter(new CustomAdapter());
-
-        // Observe changes in the Song list.
-        songManager.addObserver(songObserver);
-        songManager.updateSongs();
     }
 
     /**
@@ -187,12 +202,12 @@ public class SongListFragment extends Fragment {
          */
         @Override
         public void onBindViewHolder(@NonNull CustomHolder holder, int position) {
-            holder.populate(songManager.get(position));
+            holder.populate(currentPlayList.get(position));
         }
 
         @Override
         public int getItemViewType(int position) {
-            if (songManager.get(position).getId().equals(currentSong))
+            if (currentPlayList.get(position).getId().equals(currentSong))
                 return currentState;
             return DEFAULT_VIEW;
         }
@@ -204,16 +219,16 @@ public class SongListFragment extends Fragment {
          */
         @Override
         public int getItemCount() {
-            return songManager.size();
+            return currentPlayList.size();
         }
     }
 
     private class CustomHolder extends RecyclerView.ViewHolder {
 
-        private TextView titleView;
-        private TextView albumView;
-        private TextView artistView;
-        private ImageView imageView;
+        private final TextView titleView;
+        private final TextView albumView;
+        private final TextView artistView;
+        private final ImageView imageView;
         private Song song;
 
         public CustomHolder(@NonNull View itemView) {

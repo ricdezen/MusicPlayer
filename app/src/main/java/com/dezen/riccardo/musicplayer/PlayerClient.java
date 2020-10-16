@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 import com.dezen.riccardo.musicplayer.song.Song;
+import com.dezen.riccardo.musicplayer.song.SongManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +32,7 @@ public class PlayerClient {
 
     private final MediaBrowserCompat mediaBrowser;
     private MediaControllerCompat mediaController;
-    private MediaControllerCompat.Callback controllerCallback;
+    private Callback controllerCallback;
 
     /**
      * @param context The {@link Context} hosting the media player. If it is an Activity, it will
@@ -51,27 +52,33 @@ public class PlayerClient {
                                 context, token
                         );
                         if (context instanceof Activity)
-                    MediaControllerCompat.setMediaController((Activity) context, mediaController);
+                            MediaControllerCompat.setMediaController((Activity) context,
+                                    mediaController);
 
-                // Register callbacks if they have been set.
-                if (controllerCallback != null) {
-                    mediaController.registerCallback(controllerCallback);
-                    controllerCallback.onMetadataChanged(mediaController.getMetadata());
-                }
-            }
+                        // Register callbacks if they have been set.
+                        if (controllerCallback != null) {
+                            mediaController.registerCallback(controllerCallback);
+                            controllerCallback.onMetadataChanged(mediaController.getMetadata());
+                            controllerCallback.onManagerAvailable(
+                                    SongManager.of(mediaController.getSessionToken(), context)
+                            );
+                        }
+                    }
 
-            @Override
-            public void onConnectionFailed() {
-                super.onConnectionFailed();
-                Toast.makeText(context, R.string.connection_failed_error, Toast.LENGTH_LONG).show();
-            }
+                    @Override
+                    public void onConnectionFailed() {
+                        super.onConnectionFailed();
+                        Toast.makeText(context, R.string.connection_failed_error,
+                                Toast.LENGTH_LONG).show();
+                    }
 
-            @Override
-            public void onConnectionSuspended() {
-                super.onConnectionSuspended();
-                Toast.makeText(context, R.string.service_shut_down_warning, Toast.LENGTH_LONG).show();
-            }
-        };
+                    @Override
+                    public void onConnectionSuspended() {
+                        super.onConnectionSuspended();
+                        Toast.makeText(context, R.string.service_shut_down_warning,
+                                Toast.LENGTH_LONG).show();
+                    }
+                };
 
         // Initialize MediaBrowser.
         mediaBrowser = new MediaBrowserCompat(
@@ -119,13 +126,15 @@ public class PlayerClient {
      * Only one callback is allowed at a time.
      *
      * @param callback The callback for the Media Controller.
+     * @param context  Is used by the callback to retrieve the SongManager when available.
      */
-    public void setListener(@NonNull MediaControllerCompat.Callback callback) {
+    public void setListener(@NonNull Callback callback, @NonNull Context context) {
         clearListener();
         controllerCallback = callback;
         if (mediaController != null) {
             mediaController.registerCallback(callback);
             callback.onMetadataChanged(mediaController.getMetadata());
+            callback.onManagerAvailable(SongManager.of(mediaController.getSessionToken(), context));
         }
     }
 
@@ -173,5 +182,16 @@ public class PlayerClient {
             mediaController.getTransportControls().pause();
         else
             mediaController.getTransportControls().play();
+    }
+
+    public abstract static class Callback extends MediaControllerCompat.Callback {
+        /**
+         * Method called after the connection has been established, providing the SongManager that
+         * acts as a view to the whole Song library.
+         *
+         * @param songManager The SongManager that just became available.
+         */
+        public abstract void onManagerAvailable(@NonNull SongManager songManager);
+
     }
 }

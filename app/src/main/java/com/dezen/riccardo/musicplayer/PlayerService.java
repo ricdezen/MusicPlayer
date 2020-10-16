@@ -41,9 +41,6 @@ public class PlayerService extends MediaBrowserServiceCompat {
     public void onCreate() {
         super.onCreate();
 
-        // Call the Song Manager.
-        songManager = SongManager.getInstance(this);
-
         // Ensure notification channel is created.
         notificationHelper = NotificationHelper.getInstance(this);
         notificationHelper.createChannelIfNeeded();
@@ -55,12 +52,13 @@ public class PlayerService extends MediaBrowserServiceCompat {
                 new Intent(this, MainActivity.class),
                 0
         ));
-        player = new PlayerWrapper(songManager, this);
-        mediaSession.setCallback(player);
-
-
         // Set the token for this Service. Allows finding the Session from outside.
         setSessionToken(mediaSession.getSessionToken());
+        player = new PlayerWrapper(this);
+        mediaSession.setCallback(player);
+
+        // Song manager, in order to free it later.
+        songManager = SongManager.of(getSessionToken(), this);
     }
 
     @Override
@@ -105,12 +103,18 @@ public class PlayerService extends MediaBrowserServiceCompat {
     }
 
     /**
-     * When the Service is destroyed the media player is released.
+     * When the Service is destroyed:
+     * - MediaPlayer is released.
+     * - MediaSession is released.
+     * - SongManager associated to the session is freed.
+     * - The Service removes its notification from the foreground.
      */
     @Override
     public void onDestroy() {
         player.release();
         mediaSession.release();
+        songManager.free();
+        stopForeground(true);
         super.onDestroy();
     }
 }
