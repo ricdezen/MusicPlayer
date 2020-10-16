@@ -102,7 +102,7 @@ public class SongListFragment extends Fragment {
         public void onManagerAvailable(@NonNull SongManager manager) {
             songManager = manager;
             songManager.addObserver(songObserver);
-            currentPlayList = songManager.getAllSongs();
+            currentPlayList = songManager.getLibrary();
             onMainThread(updateRecycler);
         }
     };

@@ -29,7 +29,7 @@ public class SongManager extends Observable implements SongLoader.SongListListen
 
     private final Resources resources;
 
-    private PlayList songList;
+    private PlayList songLibrary;
     private final SongLoader songLoader;
     private final MediaSessionCompat.Token token;
 
@@ -47,7 +47,7 @@ public class SongManager extends Observable implements SongLoader.SongListListen
         songLoader = SongLoader.getInstance(context);
 
         // The list of songs starts as empty.
-        songList = new PlayList();
+        songLibrary = new PlayList();
     }
 
     /**
@@ -83,10 +83,10 @@ public class SongManager extends Observable implements SongLoader.SongListListen
      * @return A List of all the songs that are currently loaded.
      */
     @NonNull
-    public synchronized PlayList getAllSongs() {
-        if (songList.isEmpty())
+    public synchronized PlayList getLibrary() {
+        if (songLibrary.isEmpty())
             updateSongs();
-        return songList;
+        return songLibrary;
     }
 
     /**
@@ -97,7 +97,7 @@ public class SongManager extends Observable implements SongLoader.SongListListen
      * @param listener The callback for when the loading is done.
      */
     public void getThumbnail(@NonNull String id, @NonNull SongLoader.ThumbnailListener listener) {
-        Song song = songList.get(id);
+        Song song = songLibrary.get(id);
         if (song == null) {
             listener.onLoaded(id, Utils.getDefaultThumbnail(resources));
             return;
@@ -140,9 +140,9 @@ public class SongManager extends Observable implements SongLoader.SongListListen
     public void onLoaded(@NonNull List<Song> newList) {
         synchronized (this) {
             // By construction of the Song database we know that the list is also a Set.
-            songList = new PlayList(new HashSet<>(newList));
+            songLibrary = new PlayList(new HashSet<>(newList));
             setChanged();
         }
-        notifyObservers(songList);
+        notifyObservers(songLibrary);
     }
 }

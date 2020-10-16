@@ -4,8 +4,7 @@ import androidx.annotation.NonNull;
 
 /**
  * Interface defining the behaviour of a Song library. An object implementing this should be treated
- * as a static library of all the available Songs in a Context. A SongLibrary should implement
- * notifications for changes.
+ * as a static library of all the available Songs in a Context.
  *
  * @author Riccardo De Zen.
  */
@@ -18,5 +17,5 @@ public interface SongLibrary {
      * @return A List of all the songs that are currently loaded.
      */
     @NonNull
-    PlayList getAllSongs();
+    PlayList getLibrary();
 }

@@ -59,7 +59,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         // The full library of Songs.
         SongManager songManager = SongManager.of(service.getSessionToken(), service);
         songManager.addObserver(updateObserver);
-        this.currentPlayList = songManager.getAllSongs();
+        this.currentPlayList = songManager.getLibrary();
 
         // Service and session.
         this.service = service;
