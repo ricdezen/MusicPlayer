@@ -3,7 +3,9 @@ package com.dezen.riccardo.musicplayer.utils;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Build;
 import android.support.v4.media.MediaDescriptionCompat;
@@ -105,7 +107,7 @@ public class NotificationHelper {
      * @param id           Id for the Notification.
      * @param notification Notification to post.
      */
-    public void notify(int id, Notification notification) {
+    public void notify(int id, @NonNull Notification notification) {
         notificationManager.notify(id, notification);
     }
 
@@ -124,12 +126,7 @@ public class NotificationHelper {
      */
     @NonNull
     public Notification getPlayerServiceNotification(@NonNull PlayerService service) throws NullPointerException {
-        NotificationCompat.Builder builder;
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-            builder = getLowApiBuilder(service);
-        else
-            builder = getChannelBuilder(service);
+        NotificationCompat.Builder builder = getNotificationBuilder(service);
 
         MediaControllerCompat controller = service.getMediaSession().getController();
         MediaMetadataCompat metadata = controller.getMetadata();
@@ -158,12 +155,14 @@ public class NotificationHelper {
                 // Make the transport controls visible on the lock screen.
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 // Media control buttons
-                /*.addAction(R.drawable.shuffle_icon,
-                        "Shuffle",
-                        MediaButtonReceiver.buildMediaButtonPendingIntent(
+                .addAction(service.getModeDrawable(),
+                        "Mode",
+                        PendingIntent.getBroadcast(
                                 service,
-                                PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
-                        ))*/
+                                0,
+                                new Intent(PlayerService.CYCLE_MODE),
+                                PendingIntent.FLAG_CANCEL_CURRENT
+                        ))
                 .addAction(R.drawable.previous_icon,
                         resources.getString(R.string.previous),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
@@ -190,6 +189,17 @@ public class NotificationHelper {
 
 
         return builder.build();
+    }
+
+    /**
+     * @param context The calling Context, used to retrieve the Notification builder.
+     * @return An appropriate Notification builder based on api version.
+     */
+    private NotificationCompat.Builder getNotificationBuilder(@NonNull Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            return getLowApiBuilder(context);
+        else
+            return getChannelBuilder(context);
     }
 
     /**

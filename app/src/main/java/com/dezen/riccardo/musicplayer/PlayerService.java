@@ -2,10 +2,14 @@ package com.dezen.riccardo.musicplayer;
 
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,15 +28,39 @@ import java.util.List;
  */
 public class PlayerService extends MediaBrowserServiceCompat {
 
+    public static final String CYCLE_MODE = PlayerService.class.getName() + ".CYCLE_MODE";
+    // TODO Find a better alternative.
+    private static final int[] MODES = {
+            PlaybackStateCompat.REPEAT_MODE_NONE,
+            PlaybackStateCompat.REPEAT_MODE_ONE,
+            PlaybackStateCompat.REPEAT_MODE_ALL,
+            PlaybackStateCompat.SHUFFLE_MODE_ALL
+    };
+    private static final String[] MODE_NAMES = {
+            "NONE",
+            "REPEAT_ONE",
+            "REPEAT_ALL",
+            "SHUFFLE"
+    };
+    private static final int[] MODE_ICON = {
+            R.drawable.paperclip_black,
+            R.drawable.repeat_one_icon,
+            R.drawable.repeat_all_icon,
+            R.drawable.shuffle_icon
+    };
+
     public static final String LOG_TAG = "PlayerService";
     public static final int NOTIFICATION_ID = 1234;
 
     private static final int ACTIVITY_PENDING_INTENT_CODE = 4321;
 
+    private final CycleModeReceiver receiver = new CycleModeReceiver();
     private NotificationHelper notificationHelper;
     private MediaSessionCompat mediaSession;
     private SongManager songManager;
     private PlayerWrapper player;
+
+    private int currentMode = 0;
 
     /**
      * When created the Service makes sure the notification channel is enabled if needed.
@@ -59,12 +87,32 @@ public class PlayerService extends MediaBrowserServiceCompat {
 
         // Song manager, in order to free it later.
         songManager = SongManager.of(getSessionToken(), this);
+
+        // Receiver to change mode.
+        registerReceiver(receiver, new IntentFilter(CYCLE_MODE));
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         MediaButtonReceiver.handleIntent(mediaSession, intent);
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    /**
+     * When the Service is destroyed:
+     * - MediaPlayer is released.
+     * - MediaSession is released.
+     * - SongManager associated to the session is freed.
+     * - The Service removes its notification from the foreground.
+     */
+    @Override
+    public void onDestroy() {
+        player.release();
+        mediaSession.release();
+        songManager.free();
+        stopForeground(true);
+        unregisterReceiver(receiver);
+        super.onDestroy();
     }
 
     /**
@@ -96,25 +144,47 @@ public class PlayerService extends MediaBrowserServiceCompat {
     }
 
     /**
+     * @return The appropriate Drawable id for the current mode.
+     */
+    public int getModeDrawable() {
+        return MODE_ICON[currentMode];
+    }
+
+    /**
      * @return The {@link MediaSessionCompat} for this Service.
      */
     public MediaSessionCompat getMediaSession() {
         return mediaSession;
     }
 
-    /**
-     * When the Service is destroyed:
-     * - MediaPlayer is released.
-     * - MediaSession is released.
-     * - SongManager associated to the session is freed.
-     * - The Service removes its notification from the foreground.
-     */
-    @Override
-    public void onDestroy() {
-        player.release();
-        mediaSession.release();
-        songManager.free();
-        stopForeground(true);
-        super.onDestroy();
+    private void nextMode() {
+        int nextMode = (currentMode + 1) % MODES.length;
+        int mode = MODES[nextMode];
+
+        // TODO hardwiring.
+        // !!! Modes have the same values. How can I distinguish programmatically?
+        if (nextMode == 3)
+            player.onSetShuffleMode(mode);
+        else
+            player.onSetRepeatMode(mode);
+
+        currentMode = nextMode;
+        // Update notification.
+        notificationHelper.notify(NOTIFICATION_ID, getNotification());
     }
+
+    private class CycleModeReceiver extends BroadcastReceiver {
+
+        /**
+         * @param context The calling Context.
+         * @param intent  The Action. Only accepted type is {@link PlayerService#CYCLE_MODE}.
+         */
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!intent.getAction().equals(CYCLE_MODE))
+                return;
+            nextMode();
+        }
+    }
+
 }
