@@ -141,7 +141,7 @@ public class NotificationHelper {
                         R.drawable.pause_icon : R.drawable.play_icon;
 
         builder
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
 
                 // Add the metadata for the currently playing track.
                 .setContentTitle(description.getTitle())
@@ -158,6 +158,12 @@ public class NotificationHelper {
                 // Make the transport controls visible on the lock screen.
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 // Media control buttons
+                /*.addAction(R.drawable.shuffle_icon,
+                        "Shuffle",
+                        MediaButtonReceiver.buildMediaButtonPendingIntent(
+                                service,
+                                PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
+                        ))*/
                 .addAction(R.drawable.previous_icon,
                         resources.getString(R.string.previous),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(

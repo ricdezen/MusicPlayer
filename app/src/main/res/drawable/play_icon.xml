@@ -5,10 +5,8 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:name="arrow"
+        android:name="path"
+        android:pathData="M 8 5 L 8 19 L 19 12 Z"
         android:fillColor="#000"
-        android:pathData="M 3 1 L 22 12 L 3 23 Z"
-        android:strokeWidth="2"
-        android:strokeLineJoin="round"
-        android:strokeColor="#000" />
+        android:strokeWidth="1" />
 </vector>

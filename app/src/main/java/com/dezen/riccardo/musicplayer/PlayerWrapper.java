@@ -16,20 +16,29 @@ import com.dezen.riccardo.musicplayer.utils.NotificationHelper;
 import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class PlayerWrapper extends MediaSessionCompat.Callback {
 
     public static final long[] SUPPORTED_ACTIONS = new long[]{
+            PlaybackStateCompat.ACTION_PLAY,
+            PlaybackStateCompat.ACTION_PAUSE,
             PlaybackStateCompat.ACTION_PLAY_PAUSE,
             PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID,
             PlaybackStateCompat.ACTION_SKIP_TO_NEXT,
-            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS,
+            PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE,
+            PlaybackStateCompat.ACTION_SET_REPEAT_MODE
     };
 
     // Current Song.
     private String currentSongId;
     // Current PlayList.
     private PlayList currentPlayList;
+
+    // TODO store in shared preferences and init with a default.
+    private int repeatMode = PlaybackStateCompat.REPEAT_MODE_NONE;
+    private int shuffleMode = PlaybackStateCompat.SHUFFLE_MODE_NONE;
 
     // SongManager.
     private final SongManager songManager;
@@ -44,22 +53,33 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     // PlaybackStateBuilder.
     private final PlaybackStateCompat.Builder playbackStateBuilder;
 
+    // Update this Player's playlist when the SongManager is updated.
     private SongManager.PlayListObserver playListObserver = (newPL) -> {
         synchronized (PlayerWrapper.this) {
             currentPlayList = newPL;
         }
     };
 
+    // No repeat -> Just skip and stop if it is the last song. NO SHUFFLE.
+    private final MediaPlayer.OnCompletionListener noRepeatListener = (mp) -> onSkipNoLoop();
+    // Repeat all -> Just skip. SHUFFLE COMPATIBLE.
+    private final MediaPlayer.OnCompletionListener repeatAllListener = (mp) -> onSkipToNext();
+    // Repeat one -> Play the same media again. NO SHUFFLE.
+    private final MediaPlayer.OnCompletionListener repeatOneListener = (mp) -> onPlayFromMediaId(currentSongId, null);
+
     /**
      * Construct a Player for a certain Service, it retrieves the contents of the SongManager for
      * the Service's MediaSession.
      *
-     * @param service The Service hosting the Player. Used as context.
+     * @param service The Service hosting the Player. Used as context. Must have a non-null MediaSession token.
      */
     public PlayerWrapper(@NonNull PlayerService service) {
         // Reference SongManager for this Session.
         // The full library of Songs.
-        songManager = SongManager.of(service.getSessionToken(), service);
+        songManager = SongManager.of(
+                Objects.requireNonNull(service.getSessionToken()),
+                service
+        );
         songManager.observePlayList(playListObserver);
         this.currentPlayList = songManager.getPlayList();
 
@@ -69,8 +89,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
 
         // Media Player.
         this.mediaPlayer = new MediaPlayer();
-        // TODO By default, skip to next on completion.
-        this.mediaPlayer.setOnCompletionListener((mp) -> onSkipToNext());
+        this.mediaPlayer.setOnCompletionListener(noRepeatListener);
 
         // Notification Utils.
         this.notificationHelper = NotificationHelper.getInstance(service);
@@ -116,7 +135,6 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
                 PlayerService.NOTIFICATION_ID,
                 service.getNotification()
         );
-
     }
 
     /**
@@ -172,16 +190,17 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     }
 
     /**
-     * Skip to the next Song.
+     * Skip to the next Song. If shuffle mode is active, will go to a random song.
      */
     @Override
     public synchronized void onSkipToNext() {
         super.onSkipToNext();
 
-        if (currentSongId == null)
+        if (currentSongId == null || currentPlayList.isEmpty())
             return;
 
-        Song song = currentPlayList.next(currentSongId);
+        Song song = (shuffleMode == PlaybackStateCompat.SHUFFLE_MODE_ALL) ?
+                currentPlayList.random(currentSongId) : currentPlayList.next(currentSongId);
         if (song == null)
             return;
 
@@ -189,13 +208,30 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     }
 
     /**
+     * Skip to the next song, but stop playback if this leads to the top of the playlist.
+     * TODO Does it make sense to skip only in linear mode? Ignoring shuffle?
+     */
+    public synchronized void onSkipNoLoop() {
+        if (currentSongId == null || currentPlayList.isEmpty())
+            return;
+
+        // If next song == first, stop, otherwise, play it.
+        Song next = currentPlayList.next(currentSongId);
+        if (next == null || next.getId().equals(currentPlayList.get(0).getId()))
+            stop();
+        else
+            onPlayFromMediaId(next.getId(), null);
+    }
+
+    /**
+     * TODO save history of songs to go back during shuffle.
      * Skip to the previous Song.
      */
     @Override
     public synchronized void onSkipToPrevious() {
         super.onSkipToPrevious();
 
-        if (currentSongId == null)
+        if (currentSongId == null || currentPlayList.isEmpty())
             return;
 
         Song song = currentPlayList.previous(currentSongId);
@@ -206,21 +242,40 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     }
 
     /**
-     * Custom actions. Actions allowed:
-     * - "SET_PLAYLIST": Provide a playlist's name in the extras. The Playlist must be available
-     * in {@link }. If not, nothing will be done.
-     * TODO add class name.
+     * TODO other modes. Should I keep on setting shuffle to NONE?
      *
-     * @param action Action String.
-     * @param extras Extras for the Action.
+     * @param repeatMode The repeat mode. Currently manages only NONE, ONE and ALL.
      */
     @Override
-    public void onCustomAction(String action, Bundle extras) {
-        super.onCustomAction(action, extras);
+    public void onSetRepeatMode(int repeatMode) {
+        super.onSetRepeatMode(repeatMode);
+        this.shuffleMode = PlaybackStateCompat.SHUFFLE_MODE_NONE;
+        this.repeatMode = repeatMode;
+        switch (repeatMode) {
+            case PlaybackStateCompat.REPEAT_MODE_ONE:
+                mediaPlayer.setOnCompletionListener(repeatOneListener);
+                break;
+            case PlaybackStateCompat.REPEAT_MODE_ALL:
+                mediaPlayer.setOnCompletionListener(repeatAllListener);
+                break;
+            default:
+                mediaPlayer.setOnCompletionListener(noRepeatListener);
+        }
     }
 
     /**
-     * TODO Stop observing, somehow release SongManager.
+     * TODO other modes. Should I keep setting repeat to NONE?
+     *
+     * @param shuffleMode The shuffle mode. Currently manages only NONE and ALL.
+     */
+    @Override
+    public void onSetShuffleMode(int shuffleMode) {
+        super.onSetShuffleMode(shuffleMode);
+        this.repeatMode = PlaybackStateCompat.REPEAT_MODE_NONE;
+        this.shuffleMode = shuffleMode;
+    }
+
+    /**
      * Release the resources associated with this player, the Player cannot be used anymore.
      */
     public synchronized void release() {
