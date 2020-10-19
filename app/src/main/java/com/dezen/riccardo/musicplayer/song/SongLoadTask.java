@@ -63,7 +63,7 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                     Long.parseLong(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)))
             );
-            // TODO Check if the file is acceptable.
+            // TODO Add some regex filter.
 
             // If the file is an audio file, continue.
             builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, String.valueOf(uri));
@@ -75,7 +75,7 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
                 builder.putString(metaKey, cursor.getString(cursor.getColumnIndex(key)));
             }
 
-            songs.add(new Song(builder.build()));
+            songs.add(Song.from(builder.build()));
             publishProgress(songs.size() / count * 100);
         } while (cursor.moveToNext());
 

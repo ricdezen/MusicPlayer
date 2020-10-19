@@ -9,7 +9,6 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.session.MediaSessionCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,6 +19,7 @@ import com.dezen.riccardo.musicplayer.song.SongManager;
 import com.dezen.riccardo.musicplayer.utils.NotificationHelper;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Service that manages the playback of songs.
@@ -29,19 +29,6 @@ import java.util.List;
 public class PlayerService extends MediaBrowserServiceCompat {
 
     public static final String CYCLE_MODE = PlayerService.class.getName() + ".CYCLE_MODE";
-    // TODO Find a better alternative.
-    private static final int[] MODES = {
-            PlaybackStateCompat.REPEAT_MODE_NONE,
-            PlaybackStateCompat.REPEAT_MODE_ONE,
-            PlaybackStateCompat.REPEAT_MODE_ALL,
-            PlaybackStateCompat.SHUFFLE_MODE_ALL
-    };
-    private static final String[] MODE_NAMES = {
-            "NONE",
-            "REPEAT_ONE",
-            "REPEAT_ALL",
-            "SHUFFLE"
-    };
     private static final int[] MODE_ICON = {
             R.drawable.paperclip_black,
             R.drawable.repeat_one_icon,
@@ -51,7 +38,6 @@ public class PlayerService extends MediaBrowserServiceCompat {
 
     public static final String LOG_TAG = "PlayerService";
     public static final int NOTIFICATION_ID = 1234;
-
     private static final int ACTIVITY_PENDING_INTENT_CODE = 4321;
 
     private final CycleModeReceiver receiver = new CycleModeReceiver();
@@ -59,6 +45,14 @@ public class PlayerService extends MediaBrowserServiceCompat {
     private MediaSessionCompat mediaSession;
     private SongManager songManager;
     private PlayerWrapper player;
+
+    // Methods to trigger the various modes in the player.
+    private final Runnable[] MODES = {
+            () -> player.noRepeat(),
+            () -> player.repeatOne(),
+            () -> player.repeatAll(),
+            () -> player.shuffle()
+    };
 
     private int currentMode = 0;
 
@@ -85,8 +79,8 @@ public class PlayerService extends MediaBrowserServiceCompat {
         player = new PlayerWrapper(this);
         mediaSession.setCallback(player);
 
-        // Song manager, in order to free it later.
-        songManager = SongManager.of(getSessionToken(), this);
+        // Song manager, in order to free it later. Token won't be null for sure.
+        songManager = SongManager.of(Objects.requireNonNull(getSessionToken()), this);
 
         // Receiver to change mode.
         registerReceiver(receiver, new IntentFilter(CYCLE_MODE));
@@ -157,17 +151,14 @@ public class PlayerService extends MediaBrowserServiceCompat {
         return mediaSession;
     }
 
+    /**
+     * Cycle through the 4 possible modes for playback.
+     */
     private void nextMode() {
         int nextMode = (currentMode + 1) % MODES.length;
-        int mode = MODES[nextMode];
-
-        // TODO hardwiring.
-        // !!! Modes have the same values. How can I distinguish programmatically?
-        if (nextMode == 3)
-            player.onSetShuffleMode(mode);
-        else
-            player.onSetRepeatMode(mode);
-
+        // Run the method in the player.
+        MODES[nextMode].run();
+        // Update mode.
         currentMode = nextMode;
         // Update notification.
         notificationHelper.notify(NOTIFICATION_ID, getNotification());

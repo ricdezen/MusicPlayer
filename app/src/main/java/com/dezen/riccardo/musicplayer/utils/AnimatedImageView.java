@@ -12,9 +12,10 @@ import androidx.vectordrawable.graphics.drawable.Animatable2Compat;
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat;
 
 /**
- * Temporary solution for an ImageView that always plays its Drawable's animation in loop when
- * drawn.
+ * Simple class for an ImageView that always plays its Drawable's animation in loop when drawn.
  * Its Drawable MUST be an AnimatedVectorDrawable or AnimatedVectorDrawableCompat.
+ *
+ * @author Riccardo De Zen.
  */
 public class AnimatedImageView extends androidx.appcompat.widget.AppCompatImageView {
 

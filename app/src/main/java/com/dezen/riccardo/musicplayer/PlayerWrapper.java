@@ -363,4 +363,32 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         ).build());
     }
 
+    /**
+     * Set Repeat and shuffle up so that when the last song is played, the playback stops.
+     */
+    public void noRepeat() {
+        onSetRepeatMode(PlaybackStateCompat.REPEAT_MODE_NONE);
+    }
+
+    /**
+     * Set Repeat and shuffle so that when a song ends, it is played again.
+     */
+    public void repeatOne() {
+        onSetRepeatMode(PlaybackStateCompat.REPEAT_MODE_ONE);
+    }
+
+    /**
+     * Set Repeat and Shuffle so that when the last song is played, it starts over from the first.
+     */
+    public void repeatAll() {
+        onSetRepeatMode(PlaybackStateCompat.REPEAT_MODE_ALL);
+    }
+
+    /**
+     * Set Repeat and Shuffle so that random songs are played.
+     */
+    public void shuffle() {
+        onSetShuffleMode(PlaybackStateCompat.SHUFFLE_MODE_ALL);
+    }
+
 }

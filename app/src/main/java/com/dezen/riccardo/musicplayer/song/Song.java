@@ -26,6 +26,7 @@ public final class Song implements Filterable<String>, Comparable<Song> {
             MediaMetadataCompat.METADATA_KEY_ALBUM,
             MediaMetadataCompat.METADATA_KEY_ARTIST
     };
+
     public static final String[] MEDIA_COLUMNS = {
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
@@ -51,7 +52,7 @@ public final class Song implements Filterable<String>, Comparable<Song> {
      * @param metadata The {@link MediaMetadataCompat} for this Song. Must contain at least: id,
      *                 uri, title, artist, album.
      */
-    public Song(@NonNull MediaMetadataCompat metadata) {
+    private Song(@NonNull MediaMetadataCompat metadata) {
         mediaItem = new MediaBrowserCompat.MediaItem(
                 metadata.getDescription(),
                 MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
@@ -137,6 +138,16 @@ public final class Song implements Filterable<String>, Comparable<Song> {
      */
     @Override
     public int compareTo(@NonNull Song song) {
-        return this.getId().compareTo(song.getTitle());
+        return this.getId().compareTo(song.getId());
+    }
+
+    /**
+     * Create a Song Object from its Metadata.
+     *
+     * @param metadata The metadata for this Song.
+     * @return The Song object.
+     */
+    public static Song from(@NonNull MediaMetadataCompat metadata) {
+        return new Song(metadata);
     }
 }
