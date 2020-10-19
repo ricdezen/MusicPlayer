@@ -331,8 +331,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         session.setPlaybackState(playbackStateBuilder.setState(
                 PlaybackStateCompat.STATE_PAUSED,
                 mediaPlayer.getCurrentPosition(),
-                // TODO playback speed
-                0
+                1
         ).build());
     }
 
@@ -344,8 +343,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         session.setPlaybackState(playbackStateBuilder.setState(
                 PlaybackStateCompat.STATE_PLAYING,
                 mediaPlayer.getCurrentPosition(),
-                // TODO playback speed
-                0
+                1
         ).build());
     }
 
@@ -358,8 +356,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         session.setPlaybackState(playbackStateBuilder.setState(
                 PlaybackStateCompat.STATE_STOPPED,
                 mediaPlayer.getCurrentPosition(),
-                // TODO playback speed
-                0
+                1
         ).build());
     }
 
