@@ -1,6 +1,10 @@
 package com.dezen.riccardo.musicplayer;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -31,6 +35,10 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
             PlaybackStateCompat.ACTION_SET_REPEAT_MODE
     };
 
+    private static final IntentFilter noisyFilter = new IntentFilter(
+            AudioManager.ACTION_AUDIO_BECOMING_NOISY
+    );
+
     // Current Song.
     private String currentSongId;
     // Current PlayList.
@@ -52,6 +60,8 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     private final MediaPlayer mediaPlayer;
     // PlaybackStateBuilder.
     private final PlaybackStateCompat.Builder playbackStateBuilder;
+
+    private final BroadcastReceiver noisyReceiver = new NoisyReceiver();
 
     // Update this Player's playlist when the SongManager is updated.
     private SongManager.PlayListObserver playListObserver = (newPL) -> {
@@ -121,12 +131,15 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         // Start (or restart) the Service.
         service.startService(new Intent(service, PlayerService.class));
 
-        // Set the Media Session as active.
-        session.setActive(true);
-
         // Return if the song cannot be played.
         if (!play(song))
             return;
+
+        // Receiver for pausing when becoming noisy.
+        service.registerReceiver(noisyReceiver, noisyFilter);
+
+        // Set the Media Session as active.
+        session.setActive(true);
 
         currentSongId = mediaId;
 
@@ -139,7 +152,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
 
     /**
      * The Media session received a play command.
-     * TODO : Audio Focus (api 26), become noisy (broadcast receiver).
+     * TODO : Audio Focus (api 26).
      */
     @Override
     public synchronized void onPlay() {
@@ -148,11 +161,14 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         // Start (or restart) the Service.
         service.startService(new Intent(service, PlayerService.class));
 
-        // Set the Media Session as active.
-        session.setActive(true);
-
         // Play the song.
         resume();
+
+        // Receiver for pausing when becoming noisy.
+        service.registerReceiver(noisyReceiver, noisyFilter);
+
+        // Set the Media Session as active.
+        session.setActive(true);
 
         // Put the Service in the foreground.
         service.startForeground(
@@ -187,6 +203,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         session.setActive(false);
         service.stopForeground(true);
         service.stopSelf();
+        service.unregisterReceiver(noisyReceiver);
     }
 
     /**
@@ -390,6 +407,22 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
      */
     public void shuffle() {
         onSetShuffleMode(PlaybackStateCompat.SHUFFLE_MODE_ALL);
+    }
+
+    private class NoisyReceiver extends BroadcastReceiver {
+        /**
+         * Pause the playback.
+         *
+         * @param context Calling Context.
+         * @param intent  Actions different from {@link AudioManager#ACTION_AUDIO_BECOMING_NOISY}
+         *                are ignored.
+         */
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction()))
+                return;
+            onPause();
+        }
     }
 
 }

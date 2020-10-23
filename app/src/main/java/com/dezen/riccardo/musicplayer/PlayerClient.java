@@ -3,6 +3,7 @@ package com.dezen.riccardo.musicplayer;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
+import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -12,12 +13,16 @@ import android.widget.MediaController;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Class used to simplify MediaBrowserClient usage. Communicates with a {@link PlayerService}.
@@ -28,13 +33,14 @@ import java.util.Map;
  *
  * @author Riccardo De Zen.
  */
-public class PlayerClient implements MediaController.MediaPlayerControl {
+public class PlayerClient extends MediaControllerCompat.Callback implements MediaController.MediaPlayerControl {
 
     private static final Map<Integer, PlayerClient> instancePool = new HashMap<>();
 
+    private final Set<Observer> observers = new HashSet<>();
+
     private final MediaBrowserCompat mediaBrowser;
     private MediaControllerCompat mediaController;
-    private Callback controllerCallback;
 
     /**
      * @param context The {@link Context} hosting the media player. If it is an Activity, it will
@@ -58,13 +64,11 @@ public class PlayerClient implements MediaController.MediaPlayerControl {
                                     mediaController);
 
                         // Register callbacks if they have been set.
-                        if (controllerCallback != null) {
-                            mediaController.registerCallback(controllerCallback);
-                            controllerCallback.onMetadataChanged(mediaController.getMetadata());
-                            controllerCallback.onManagerAvailable(
-                                    SongManager.of(mediaController.getSessionToken(), context)
-                            );
-                        }
+                        mediaController.registerCallback(PlayerClient.this);
+                        PlayerClient.this.onMetadataChanged(mediaController.getMetadata());
+                        PlayerClient.this.onManagerAvailable(
+                                SongManager.of(mediaController.getSessionToken(), context)
+                        );
                     }
 
                     @Override
@@ -127,26 +131,22 @@ public class PlayerClient implements MediaController.MediaPlayerControl {
      * metadata of the song currently being played will be provided.
      * Only one callback is allowed at a time.
      *
-     * @param callback The callback for the Media Controller.
+     * @param observer The callback for the Media Controller.
      * @param context  Is used by the callback to retrieve the SongManager when available.
      */
-    public void setListener(@NonNull Callback callback, @NonNull Context context) {
-        clearListener();
-        controllerCallback = callback;
+    public void observe(@NonNull Observer observer, @NonNull Context context) {
+        observers.add(observer);
         if (mediaController != null) {
-            mediaController.registerCallback(callback);
-            callback.onMetadataChanged(mediaController.getMetadata());
-            callback.onManagerAvailable(SongManager.of(mediaController.getSessionToken(), context));
+            observer.onMetadataChanged(mediaController.getMetadata());
+            observer.onManagerAvailable(SongManager.of(mediaController.getSessionToken(), context));
         }
     }
 
     /**
-     * Remove the event listener.
+     * Remove an Observer.
      */
-    public void clearListener() {
-        if (mediaController != null && controllerCallback != null)
-            mediaController.unregisterCallback(controllerCallback);
-        controllerCallback = null;
+    public void removeObserver(@NonNull Observer observer) {
+        observers.remove(observer);
     }
 
     /**
@@ -186,6 +186,97 @@ public class PlayerClient implements MediaController.MediaPlayerControl {
             mediaController.getTransportControls().play();
     }
 
+    // ? Overrides for controller callback.
+
+    @Override
+    public void onAudioInfoChanged(MediaControllerCompat.PlaybackInfo info) {
+        super.onAudioInfoChanged(info);
+        for (Observer c : observers)
+            c.onAudioInfoChanged(info);
+    }
+
+    @Override
+    public void onCaptioningEnabledChanged(boolean enabled) {
+        super.onCaptioningEnabledChanged(enabled);
+        for (Observer c : observers)
+            c.onCaptioningEnabledChanged(enabled);
+    }
+
+    @Override
+    public void onExtrasChanged(Bundle extras) {
+        super.onExtrasChanged(extras);
+        for (Observer c : observers)
+            c.onExtrasChanged(extras);
+    }
+
+    @Override
+    public void onMetadataChanged(MediaMetadataCompat metadata) {
+        super.onMetadataChanged(metadata);
+        for (Observer c : observers)
+            c.onMetadataChanged(metadata);
+    }
+
+    @Override
+    public void onPlaybackStateChanged(PlaybackStateCompat state) {
+        super.onPlaybackStateChanged(state);
+        for (Observer c : observers)
+            c.onPlaybackStateChanged(state);
+    }
+
+    @Override
+    public void onQueueChanged(List<MediaSessionCompat.QueueItem> queue) {
+        super.onQueueChanged(queue);
+        for (Observer c : observers)
+            c.onQueueChanged(queue);
+    }
+
+    @Override
+    public void onQueueTitleChanged(CharSequence title) {
+        super.onQueueTitleChanged(title);
+        for (Observer c : observers)
+            c.onQueueTitleChanged(title);
+    }
+
+    @Override
+    public void onRepeatModeChanged(int repeatMode) {
+        super.onRepeatModeChanged(repeatMode);
+        for (Observer c : observers)
+            c.onRepeatModeChanged(repeatMode);
+    }
+
+    @Override
+    public void onSessionDestroyed() {
+        super.onSessionDestroyed();
+        for (Observer c : observers)
+            c.onSessionDestroyed();
+    }
+
+    @Override
+    public void onSessionEvent(String event, Bundle extras) {
+        super.onSessionEvent(event, extras);
+        for (Observer c : observers)
+            c.onSessionEvent(event, extras);
+    }
+
+    @Override
+    public void onSessionReady() {
+        super.onSessionReady();
+        for (Observer c : observers)
+            c.onSessionReady();
+    }
+
+    @Override
+    public void onShuffleModeChanged(int shuffleMode) {
+        super.onShuffleModeChanged(shuffleMode);
+        for (Observer c : observers)
+            c.onShuffleModeChanged(shuffleMode);
+    }
+
+    public void onManagerAvailable(@NonNull SongManager manager) {
+        for (Observer c : observers)
+            c.onManagerAvailable(manager);
+    }
+
     // ? Overrides for control via a View.
 
     @Override
@@ -204,13 +295,17 @@ public class PlayerClient implements MediaController.MediaPlayerControl {
 
     @Override
     public int getDuration() {
-        return Integer.parseInt(mediaController.getMetadata().getString(
+        if (mediaController == null || mediaController.getMetadata() == null)
+            return -1;
+        return (int) mediaController.getMetadata().getLong(
                 MediaMetadataCompat.METADATA_KEY_DURATION
-        ));
+        );
     }
 
     @Override
     public int getCurrentPosition() {
+        if (mediaController == null || mediaController.getMetadata() == null)
+            return -1;
         return (int) mediaController.getPlaybackState().getPosition();
     }
 
@@ -254,14 +349,27 @@ public class PlayerClient implements MediaController.MediaPlayerControl {
         return 0;
     }
 
-    public abstract static class Callback extends MediaControllerCompat.Callback {
+    // ? Useful getters
+    @Nullable
+    public MediaMetadataCompat getMetadata() {
+        return (mediaController == null) ? null : mediaController.getMetadata();
+    }
+
+    @Nullable
+    public PlaybackStateCompat getPlaybackState() {
+        return (mediaController == null) ? null : mediaController.getPlaybackState();
+    }
+
+    public abstract static class Observer extends MediaControllerCompat.Callback {
         /**
          * Method called after the connection has been established, providing the SongManager that
          * acts as a view to the whole Song library.
          *
          * @param songManager The SongManager that just became available.
          */
-        public abstract void onManagerAvailable(@NonNull SongManager songManager);
+        public void onManagerAvailable(@NonNull SongManager songManager) {
+
+        }
 
     }
 }

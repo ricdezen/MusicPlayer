@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.dezen.riccardo.musicplayer.utils.NotificationHelper;
+import com.dezen.riccardo.musicplayer.widget.PlayerWidget;
 
 /**
  * Main Activity of the app, asks for permissions and shows the song list fragment.
@@ -97,5 +98,8 @@ public class MainActivity extends AppCompatActivity {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, new SongListFragment());
         transaction.commit();
+
+        PlayerWidget widget = findViewById(R.id.player_widget);
+        widget.setController(PlayerClient.of(this), this);
     }
 }

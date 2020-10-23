@@ -80,6 +80,7 @@ public class SongManager implements SongLoader.SongListListener, SongLibrary {
      * Remove this instance from the referenced ones. Ideally, after this is called, no more calls
      * to the instance can be made. The contents are still present, but there is no warranty of
      * their correctness.
+     * TODO may get deleted by service but still be referenced by activities? Wut
      */
     public void free() {
         instancePool.remove(token);

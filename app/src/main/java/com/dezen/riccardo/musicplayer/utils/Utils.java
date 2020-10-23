@@ -9,6 +9,8 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.support.v4.media.MediaMetadataCompat;
 import android.util.Size;
@@ -197,6 +199,25 @@ public class Utils {
         for (int i = 0; i < keys.length; i++)
             map.put(keys[i], values[i]);
         return map;
+    }
+
+    /**
+     * Run something in the main thread.
+     *
+     * @param runnable The "something" to run.
+     */
+    public static void onMainThread(@NonNull Runnable runnable) {
+        new Handler(Looper.getMainLooper()).post(runnable);
+    }
+
+    /**
+     * Run something in the main thread.
+     *
+     * @param runnable The "something" to run.
+     * @param delay    Delay in milliseconds.
+     */
+    public static void onMainThread(@NonNull Runnable runnable, long delay) {
+        new Handler(Looper.getMainLooper()).postDelayed(runnable, delay);
     }
 
 }

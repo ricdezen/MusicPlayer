@@ -57,7 +57,7 @@ public class SongListFragment extends Fragment {
     };
 
     // Callback for player events.
-    private final PlayerClient.Callback playerListener = new PlayerClient.Callback() {
+    private final PlayerClient.Observer playerListener = new PlayerClient.Observer() {
 
         /**
          * When the metadata is updated, get the id of the song and set it as the song currently
@@ -112,7 +112,7 @@ public class SongListFragment extends Fragment {
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         playerClient = PlayerClient.of(context);
-        playerClient.setListener(playerListener, context);
+        playerClient.observe(playerListener, context);
     }
 
     /**

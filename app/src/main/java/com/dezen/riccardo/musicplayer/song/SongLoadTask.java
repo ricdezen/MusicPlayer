@@ -75,6 +75,9 @@ class SongLoadTask extends AsyncTask<Void, Integer, Boolean> {
                 builder.putString(metaKey, cursor.getString(cursor.getColumnIndex(key)));
             }
 
+            // TODO grrrr this is not really ok, whatevs.
+            builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
+
             songs.add(Song.from(builder.build()));
             publishProgress(songs.size() / count * 100);
         } while (cursor.moveToNext());
