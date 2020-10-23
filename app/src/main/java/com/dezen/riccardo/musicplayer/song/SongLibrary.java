@@ -18,4 +18,12 @@ public interface SongLibrary {
      */
     @NonNull
     PlayList getLibrary();
+
+    /**
+     * Method to retrieve the currently selected Playlist.
+     *
+     * @return The currently selected PlayList.
+     */
+    @NonNull
+    PlayList getPlayList();
 }

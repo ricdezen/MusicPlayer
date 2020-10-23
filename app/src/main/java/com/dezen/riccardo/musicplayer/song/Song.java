@@ -31,7 +31,7 @@ public final class Song implements Filterable<String>, Comparable<Song> {
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ARTIST
     };
     public static final Map<String, String> MEDIA_TO_META = Utils.toMap(MEDIA_COLUMNS,
             META_COLUMNS);
@@ -147,6 +147,7 @@ public final class Song implements Filterable<String>, Comparable<Song> {
      * @param metadata The metadata for this Song.
      * @return The Song object.
      */
+    @NonNull
     public static Song from(@NonNull MediaMetadataCompat metadata) {
         return new Song(metadata);
     }

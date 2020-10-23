@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
 import java.util.Set;
 
 /**
@@ -24,7 +23,7 @@ import java.util.Set;
  *
  * @author Riccardo De Zen.
  */
-public class SongManager extends Observable implements SongLoader.SongListListener, SongLibrary {
+public class SongManager implements SongLoader.SongListListener, SongLibrary {
     /**
      * Instances of this class by media session token.
      */
@@ -32,6 +31,8 @@ public class SongManager extends Observable implements SongLoader.SongListListen
 
     // Observers for the PlayList.
     private final Set<PlayListObserver> playListObservers = new HashSet<>();
+    // Observers for the Library.
+    private final Set<LibraryObserver> libraryObservers = new HashSet<>();
 
     // Keep null until something is set. If null return library when asking for PL.
     private PlayList currentPlayList;
@@ -118,7 +119,7 @@ public class SongManager extends Observable implements SongLoader.SongListListen
     }
 
     /**
-     * Resets the PlayList to the whole library.
+     * Resets the PlayList to be the whole library.
      */
     public synchronized void resetPlayList() {
         currentPlayList = null;
@@ -177,12 +178,18 @@ public class SongManager extends Observable implements SongLoader.SongListListen
         synchronized (this) {
             // By construction of the Song database we know that the list is also a Set.
             songLibrary = new PlayList(new HashSet<>(newList));
-            setChanged();
         }
-        notifyObservers(songLibrary);
+        notifyLibraryObservers();
         // If the currentPlayList is null, observers believe the full library is the playlist.
         if (currentPlayList == null)
             notifyPlayListObservers();
+    }
+
+    /**
+     * @param newObserver The new Object observing changes in the Library.
+     */
+    public void observeLibrary(@NonNull LibraryObserver newObserver) {
+        libraryObservers.add(newObserver);
     }
 
     /**
@@ -200,6 +207,21 @@ public class SongManager extends Observable implements SongLoader.SongListListen
     }
 
     /**
+     * @param observer The Observer to remove.
+     */
+    public void removeObserver(@NonNull LibraryObserver observer) {
+        libraryObservers.remove(observer);
+    }
+
+    /**
+     * Notify the LibraryObservers there has been a change in the library.
+     */
+    protected void notifyLibraryObservers() {
+        for (LibraryObserver o : libraryObservers)
+            o.onChanged(getLibrary());
+    }
+
+    /**
      * Notify the PlayListObservers there has been a change in the PlayList.
      */
     protected void notifyPlayListObservers() {
@@ -207,9 +229,18 @@ public class SongManager extends Observable implements SongLoader.SongListListen
             o.onChanged(getPlayList());
     }
 
+    public interface LibraryObserver {
+        /**
+         * Called when the library is updated.
+         *
+         * @param newLibrary The new Library.
+         */
+        void onChanged(@NonNull PlayList newLibrary);
+    }
+
     public interface PlayListObserver {
         /**
-         * Called when the a new PlayList is set.
+         * Called when a new PlayList is set.
          *
          * @param newPlayList The new PlayList.
          */

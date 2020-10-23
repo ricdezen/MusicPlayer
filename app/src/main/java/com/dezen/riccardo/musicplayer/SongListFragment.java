@@ -23,8 +23,6 @@ import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
 import com.dezen.riccardo.musicplayer.utils.Utils;
 
-import java.util.Observer;
-
 /**
  * Fragment displaying the song list for the app.
  *
@@ -53,8 +51,8 @@ public class SongListFragment extends Fragment {
     };
 
     // When songs are updated, update List.
-    private final Observer songObserver = (obj, newVal) -> {
-        library = (PlayList) newVal;
+    private final SongManager.LibraryObserver songObserver = (newLib) -> {
+        library = newLib;
         onMainThread(updateRecycler);
     };
 
@@ -99,7 +97,7 @@ public class SongListFragment extends Fragment {
         @Override
         public void onManagerAvailable(@NonNull SongManager manager) {
             songManager = manager;
-            songManager.addObserver(songObserver);
+            songManager.observeLibrary(songObserver);
             library = songManager.getLibrary();
             onMainThread(updateRecycler);
         }
@@ -151,7 +149,7 @@ public class SongListFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        songManager.deleteObserver(songObserver);
+        songManager.removeObserver(songObserver);
     }
 
     /**

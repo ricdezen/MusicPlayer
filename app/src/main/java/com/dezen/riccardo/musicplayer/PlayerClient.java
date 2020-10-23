@@ -4,9 +4,11 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.widget.MediaController;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -26,7 +28,7 @@ import java.util.Map;
  *
  * @author Riccardo De Zen.
  */
-public class PlayerClient {
+public class PlayerClient implements MediaController.MediaPlayerControl {
 
     private static final Map<Integer, PlayerClient> instancePool = new HashMap<>();
 
@@ -182,6 +184,74 @@ public class PlayerClient {
             mediaController.getTransportControls().pause();
         else
             mediaController.getTransportControls().play();
+    }
+
+    // ? Overrides for control via a View.
+
+    @Override
+    public void start() {
+        int playbackState = mediaController.getPlaybackState().getState();
+        if (playbackState != PlaybackStateCompat.STATE_PLAYING)
+            mediaController.getTransportControls().play();
+    }
+
+    @Override
+    public void pause() {
+        int playbackState = mediaController.getPlaybackState().getState();
+        if (playbackState == PlaybackStateCompat.STATE_PLAYING)
+            mediaController.getTransportControls().pause();
+    }
+
+    @Override
+    public int getDuration() {
+        return Integer.parseInt(mediaController.getMetadata().getString(
+                MediaMetadataCompat.METADATA_KEY_DURATION
+        ));
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        return (int) mediaController.getPlaybackState().getPosition();
+    }
+
+    @Override
+    public void seekTo(int pos) {
+        //TODO
+    }
+
+    @Override
+    public boolean isPlaying() {
+        int playbackState = mediaController.getPlaybackState().getState();
+        return playbackState == PlaybackStateCompat.STATE_PLAYING;
+    }
+
+    // TODO
+    @Override
+    public int getBufferPercentage() {
+        return 0;
+    }
+
+    @Override
+    public boolean canPause() {
+        return true;
+    }
+
+    // TODO
+    @Override
+    public boolean canSeekBackward() {
+        return false;
+    }
+
+    // TODO
+    @Override
+    public boolean canSeekForward() {
+        return false;
+    }
+
+    // TODO
+    @Override
+    public int getAudioSessionId() {
+        return 0;
     }
 
     public abstract static class Callback extends MediaControllerCompat.Callback {

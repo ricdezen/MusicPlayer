@@ -41,11 +41,11 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     private int shuffleMode = PlaybackStateCompat.SHUFFLE_MODE_NONE;
 
     // SongManager.
-    private final SongManager songManager;
+    private SongManager songManager;
     // The Service to manage.
-    private final PlayerService service;
+    private PlayerService service;
     // MediaSession of the Service.
-    private final MediaSessionCompat session;
+    private MediaSessionCompat session;
     // Notification Helper.
     private final NotificationHelper notificationHelper;
     // The media player.
@@ -139,7 +139,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
 
     /**
      * The Media session received a play command.
-     * TODO : Audio Focus, noisy
+     * TODO : Audio Focus (api 26), become noisy (broadcast receiver).
      */
     @Override
     public synchronized void onPlay() {
@@ -277,11 +277,16 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
 
     /**
      * Release the resources associated with this player, the Player cannot be used anymore.
+     * Dereferences most of the referenced Objects.
      */
     public synchronized void release() {
         stop();
         songManager.removeObserver(playListObserver);
         mediaPlayer.release();
+        // Dereference for garbage collection. Better safe than sorry.
+        songManager = null;
+        session = null;
+        service = null;
     }
 
     /**
@@ -349,7 +354,6 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
 
     /**
      * Method to stop the playback of a song.
-     * TODO this kinda screws up further playback.
      */
     public synchronized void stop() {
         mediaPlayer.stop();
