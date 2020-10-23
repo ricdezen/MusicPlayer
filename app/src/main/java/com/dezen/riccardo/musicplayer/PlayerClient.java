@@ -66,6 +66,7 @@ public class PlayerClient extends MediaControllerCompat.Callback implements Medi
                         // Register callbacks if they have been set.
                         mediaController.registerCallback(PlayerClient.this);
                         PlayerClient.this.onMetadataChanged(mediaController.getMetadata());
+                        PlayerClient.this.onPlaybackStateChanged(mediaController.getPlaybackState());
                         PlayerClient.this.onManagerAvailable(
                                 SongManager.of(mediaController.getSessionToken(), context)
                         );

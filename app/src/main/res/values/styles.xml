@@ -8,6 +8,7 @@
         <item name="colorAccent">@color/colorAccent</item>
 
         <item name="toolbarStyle">@style/ToolbarTheme</item>
+        <item name="seekBarStyle">@style/SeekBarTheme</item>
     </style>
 
     <style name="ToolbarTheme" parent="Theme.MaterialComponents.Light">
@@ -16,6 +17,11 @@
         <item name="actionMenuTextColor">@android:color/white</item>
         <item name="android:background">@color/colorPrimary</item>
         <item name="elevation">10dp</item>
+    </style>
+
+    <style name="SeekBarTheme" parent="Widget.AppCompat.SeekBar">
+        <item name="android:thumbTint">@color/colorPrimaryDark</item>
+        <item name="android:progressTint">@color/colorPrimary</item>
     </style>
 
 </resources>

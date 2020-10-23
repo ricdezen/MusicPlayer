@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Size;
 import android.widget.ImageView;
 
@@ -199,6 +200,16 @@ public class Utils {
         for (int i = 0; i < keys.length; i++)
             map.put(keys[i], values[i]);
         return map;
+    }
+
+    /**
+     * @return An icon for a play button if the state is not playing, an icon for a pause button if
+     * the state is playing.
+     */
+    public static int getButtonIcon(int playbackState) {
+        if (playbackState == PlaybackStateCompat.STATE_PLAYING)
+            return R.drawable.pause_icon;
+        return R.drawable.play_icon;
     }
 
     /**

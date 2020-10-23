@@ -6,6 +6,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -28,6 +29,7 @@ public class PlayerWidget extends LinearLayout {
     private View root;
     private SeekBar seekBar;
     private TextView titleView;
+    private ImageButton imageButton;
 
     private PlayerClient controller;
 
@@ -39,8 +41,10 @@ public class PlayerWidget extends LinearLayout {
                     (state.getState() != PlaybackStateCompat.STATE_PLAYING &&
                             state.getState() != PlaybackStateCompat.STATE_PAUSED))
                 hide();
-            else
+            else {
                 show();
+                imageButton.setImageResource(Utils.getButtonIcon(state.getState()));
+            }
         }
 
         @Override
@@ -81,6 +85,12 @@ public class PlayerWidget extends LinearLayout {
         LayoutInflater inflater = LayoutInflater.from(context);
         root = inflater.inflate(R.layout.player_widget_layout, this, true);
         titleView = root.findViewById(R.id.widget_song_title);
+        titleView.setSelected(true);
+        imageButton = root.findViewById(R.id.central_button);
+        imageButton.setOnClickListener((v) -> {
+            if (controller != null)
+                controller.toggle();
+        });
         seekBar = root.findViewById(R.id.song_progress);
         seekBar.setMax(1000);
         hide();
@@ -92,13 +102,10 @@ public class PlayerWidget extends LinearLayout {
      * @param context       The Context.
      */
     public void setController(@Nullable PlayerClient newController, @NonNull Context context) {
-        if (this.controller != null) {
+        if (this.controller != null)
             this.controller.removeObserver(observer);
-            show();
-        }
-        if (newController != null) {
+        if (newController != null)
             newController.observe(observer, context);
-        }
         this.controller = newController;
         observer.onMetadataChanged(newController.getMetadata());
         observer.onPlaybackStateChanged(newController.getPlaybackState());
