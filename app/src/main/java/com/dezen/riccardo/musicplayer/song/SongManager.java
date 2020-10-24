@@ -2,11 +2,13 @@ package com.dezen.riccardo.musicplayer.song;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
 
+import com.dezen.riccardo.musicplayer.utils.NaiveFifoCache;
 import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.util.HashMap;
@@ -28,6 +30,9 @@ public class SongManager implements SongLoader.SongListListener, SongLibrary {
      * Instances of this class by media session token.
      */
     private static final Map<MediaSessionCompat.Token, SongManager> instancePool = new HashMap<>();
+
+    // Cache for thumbnails.
+    private final NaiveFifoCache<String, Bitmap> thumbnailCache = new NaiveFifoCache<>(50);
 
     // Observers for the PlayList.
     private final Set<PlayListObserver> playListObservers = new HashSet<>();
@@ -141,7 +146,16 @@ public class SongManager implements SongLoader.SongListListener, SongLibrary {
             return;
         }
 
-        songLoader.loadThumbnail(song, listener);
+        Bitmap cached = thumbnailCache.get(id);
+        if (cached != null)
+            listener.onLoaded(id, cached);
+        else {
+            listener.onLoaded(id, Utils.getDefaultThumbnail(resources));
+            songLoader.loadThumbnail(song, (resultId, thumbnail) -> {
+                thumbnailCache.add(resultId, thumbnail);
+                listener.onLoaded(resultId, thumbnail);
+            });
+        }
     }
 
     /**

@@ -242,7 +242,6 @@ public class SongListFragment extends Fragment {
             titleView.setText(song.getTitle());
             albumView.setText(song.getAlbum());
             artistView.setText(song.getArtist());
-            imageView.setImageBitmap(Utils.getDefaultThumbnail(getResources()));
             songManager.getThumbnail(song.getId(), Utils.getThumbnailSize(imageView),
                     (id, thumbnail) -> onMainThread(() -> {
                         if (this.song.getId().equals(id))
