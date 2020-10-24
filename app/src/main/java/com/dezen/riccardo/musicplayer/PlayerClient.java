@@ -305,14 +305,15 @@ public class PlayerClient extends MediaControllerCompat.Callback implements Medi
 
     @Override
     public int getCurrentPosition() {
-        if (mediaController == null || mediaController.getMetadata() == null)
+        if (mediaController == null || mediaController.getPlaybackState() == null)
             return -1;
         return (int) mediaController.getPlaybackState().getPosition();
     }
 
     @Override
     public void seekTo(int pos) {
-        //TODO
+        if (mediaController != null)
+            mediaController.getTransportControls().seekTo(pos);
     }
 
     @Override

@@ -27,6 +27,7 @@ import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class Utils {
@@ -229,6 +230,45 @@ public class Utils {
      */
     public static void onMainThread(@NonNull Runnable runnable, long delay) {
         new Handler(Looper.getMainLooper()).postDelayed(runnable, delay);
+    }
+
+    /**
+     * Method to convert a value from milliseconds to a human readable hours:minutes:seconds duration.
+     * Milliseconds are rounded.
+     *
+     * @param milliseconds A value in milliseconds.
+     * @return The representation in "hh:mm:ss" format. Hours are present only if > 0.
+     */
+    public static String millisToString(int milliseconds) {
+        return millisToString(Long.valueOf(milliseconds));
+    }
+
+    /**
+     * Method to convert a value from milliseconds to a human readable hours:minutes:seconds duration.
+     * Milliseconds are rounded.
+     *
+     * @param milliseconds A value in milliseconds.
+     * @return The representation in "hh:mm:ss" format. Hours are present only if > 0.
+     */
+    public static String millisToString(long milliseconds) {
+        long totalSeconds = Math.round((milliseconds * 1.0) / 1000);
+        long totalMinutes = totalSeconds / 60;
+        long hours = totalMinutes / 60;
+        long minutes = totalMinutes % 60;
+        long seconds = totalSeconds % 60;
+
+        if (hours > 0)
+            return String.format(
+                    Locale.getDefault(),
+                    "%02d:%02d:%02d",
+                    hours, minutes, seconds
+            );
+        else
+            return String.format(
+                    Locale.getDefault(),
+                    "%02d:%02d",
+                    minutes, seconds
+            );
     }
 
 }

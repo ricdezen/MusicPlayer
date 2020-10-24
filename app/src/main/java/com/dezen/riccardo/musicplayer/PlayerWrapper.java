@@ -47,6 +47,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     // TODO store in shared preferences and init with a default.
     private int repeatMode = PlaybackStateCompat.REPEAT_MODE_NONE;
     private int shuffleMode = PlaybackStateCompat.SHUFFLE_MODE_NONE;
+    private int currentState = PlaybackStateCompat.STATE_NONE;
 
     // SongManager.
     private SongManager songManager;
@@ -106,10 +107,12 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
 
         // Setup PlaybackStateBuilder.
         this.playbackStateBuilder = new PlaybackStateCompat.Builder()
-                .setState(PlaybackStateCompat.STATE_NONE, 0, 0)
+                .setState(currentState, 0, 0)
                 .setActions(Utils.bitOR(SUPPORTED_ACTIONS));
         // Default state.
         this.session.setPlaybackState(playbackStateBuilder.build());
+        this.session.setRepeatMode(this.repeatMode);
+        this.session.setShuffleMode(this.shuffleMode);
     }
 
     /**
@@ -278,6 +281,8 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
             default:
                 mediaPlayer.setOnCompletionListener(noRepeatListener);
         }
+        session.setRepeatMode(this.repeatMode);
+        session.setShuffleMode(this.shuffleMode);
     }
 
     /**
@@ -290,6 +295,22 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
         super.onSetShuffleMode(shuffleMode);
         this.repeatMode = PlaybackStateCompat.REPEAT_MODE_NONE;
         this.shuffleMode = shuffleMode;
+        session.setRepeatMode(this.repeatMode);
+        session.setShuffleMode(this.shuffleMode);
+    }
+
+    /**
+     * @param pos Position to seek to. MediaSession will be updated with this.
+     */
+    @Override
+    public void onSeekTo(long pos) {
+        super.onSeekTo(pos);
+        mediaPlayer.seekTo((int) pos);
+        session.setPlaybackState(playbackStateBuilder.setState(
+                currentState,
+                pos,
+                1
+        ).build());
     }
 
     /**
@@ -355,6 +376,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
                 mediaPlayer.getCurrentPosition(),
                 1
         ).build());
+        currentState = PlaybackStateCompat.STATE_PAUSED;
     }
 
     /**
@@ -367,6 +389,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
                 mediaPlayer.getCurrentPosition(),
                 1
         ).build());
+        currentState = PlaybackStateCompat.STATE_PLAYING;
     }
 
     /**
@@ -379,6 +402,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
                 mediaPlayer.getCurrentPosition(),
                 1
         ).build());
+        currentState = PlaybackStateCompat.STATE_STOPPED;
     }
 
     /**

@@ -24,4 +24,9 @@
         <item name="android:progressTint">@color/colorPrimary</item>
     </style>
 
+    <style name="InactiveSeekBarTheme" parent="SeekBarTheme">
+        <item name="android:thumbTint">@color/lightGray</item>
+        <item name="android:progressTint">@color/lightGray</item>
+    </style>
+
 </resources>

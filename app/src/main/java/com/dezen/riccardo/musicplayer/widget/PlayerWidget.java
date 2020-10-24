@@ -1,6 +1,7 @@
 package com.dezen.riccardo.musicplayer.widget;
 
 import android.content.Context;
+import android.os.Build;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.AttributeSet;
@@ -26,14 +27,27 @@ import com.dezen.riccardo.musicplayer.utils.Utils;
  */
 public class PlayerWidget extends LinearLayout {
 
+    private static final String DEFAULT_TIME_TEXT = "00:00";
+
     private View root;
     private SeekBar seekBar;
     private TextView titleView;
+    private TextView positionView;
+    private TextView durationView;
     private ImageButton imageButton;
-
     private PlayerClient controller;
 
+    private boolean dragging = false;
+    private int barMax = 100;
+
+    /**
+     * Observer for the given PlayerClient.
+     */
     private final PlayerClient.Observer observer = new PlayerClient.Observer() {
+        /**
+         * @param state The new state, show the widget only if the state is non null and is
+         *              playing or paused.
+         */
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat state) {
             super.onPlaybackStateChanged(state);
@@ -47,12 +61,26 @@ public class PlayerWidget extends LinearLayout {
             }
         }
 
+        /**
+         * @param metadata The new metadata, if it is not null, show the title of the song.
+         */
         @Override
         public void onMetadataChanged(MediaMetadataCompat metadata) {
             super.onMetadataChanged(metadata);
-            if (metadata == null)
+            if (metadata == null) {
+                disable();
                 return;
+            }
             titleView.setText(metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE));
+            int newDuration = controller.getDuration();
+            // Should never happen, you never know.
+            if (newDuration < 0) {
+                disable();
+                return;
+            }
+            enable();
+            barMax = newDuration;
+            seekBar.setMax(barMax);
         }
     };
 
@@ -84,15 +112,49 @@ public class PlayerWidget extends LinearLayout {
     private void init(@NonNull Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
         root = inflater.inflate(R.layout.player_widget_layout, this, true);
+
+        // Title, needs to be selected for marquee to work.
         titleView = root.findViewById(R.id.widget_song_title);
         titleView.setSelected(true);
+
+        // Widgets for duration and position.
+        positionView = root.findViewById(R.id.song_position);
+        durationView = root.findViewById(R.id.song_duration);
+
+        // Play/pause button.
         imageButton = root.findViewById(R.id.central_button);
         imageButton.setOnClickListener((v) -> {
             if (controller != null)
                 controller.toggle();
         });
+
+        // Song progress bar.
         seekBar = root.findViewById(R.id.song_progress);
-        seekBar.setMax(1000);
+        seekBar.setMax(barMax);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            // Ignored.
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            }
+
+            /**
+             * Warn that the user is dragging the bar, so it should not be updated every second.
+             *
+             * @param seekBar The bar being touched.
+             */
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                dragging = true;
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                dragging = false;
+                controller.seekTo(seekBar.getProgress());
+            }
+        });
+
+        // Hide by default.
         hide();
     }
 
@@ -127,20 +189,49 @@ public class PlayerWidget extends LinearLayout {
     }
 
     /**
-     * Interrogate the controller on the playback info.
+     * Disable the seek bar and display a default title.
+     */
+    public void disable() {
+        seekBar.setEnabled(false);
+        seekBar.setProgress(barMax / 2);
+        titleView.setText(getResources().getString(R.string.no_metadata_error));
+        positionView.setText(DEFAULT_TIME_TEXT);
+        durationView.setText(DEFAULT_TIME_TEXT);
+        positionView.setEnabled(false);
+        durationView.setEnabled(false);
+    }
+
+    /**
+     * Re-enable the seek bar.
+     */
+    public void enable() {
+        seekBar.setEnabled(true);
+        positionView.setEnabled(true);
+        durationView.setEnabled(true);
+    }
+
+    /**
+     * Interrogate the controller on the playback position and update the progress bar.
+     * This method will also post a copy of itself if the controller is not null and the user is
+     * not dragging the seekBar.
      */
     public void updateProgress() {
-        if (this.controller == null)
+        if (controller != null)
+            Utils.onMainThread(this::updateProgress, 1000);
+        if (controller == null || dragging)
             return;
 
         int duration = controller.getDuration();
         int position = controller.getCurrentPosition();
 
         if (duration >= 0 && position >= 0) {
-            int progress = (int) Math.round((1.0 * position) / duration * 1000);
-            seekBar.setProgress(progress);
+            positionView.setText(Utils.millisToString(position));
+            durationView.setText(Utils.millisToString(duration));
+            int progress = (int) Math.round((1.0 * position) / duration * barMax);
+            if (Build.VERSION.SDK_INT < 24)
+                seekBar.setProgress(progress);
+            else
+                seekBar.setProgress(progress, true);
         }
-
-        Utils.onMainThread(this::updateProgress, 1000);
     }
 }
