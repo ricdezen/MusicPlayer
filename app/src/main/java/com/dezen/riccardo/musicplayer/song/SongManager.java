@@ -3,7 +3,6 @@ package com.dezen.riccardo.musicplayer.song;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
@@ -11,10 +10,8 @@ import androidx.annotation.NonNull;
 import com.dezen.riccardo.musicplayer.utils.NaiveFifoCache;
 import com.dezen.riccardo.musicplayer.utils.Utils;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -26,10 +23,8 @@ import java.util.Set;
  * @author Riccardo De Zen.
  */
 public class SongManager implements SongLoader.SongListListener, SongLibrary {
-    /**
-     * Instances of this class by media session token.
-     */
-    private static final Map<MediaSessionCompat.Token, SongManager> instancePool = new HashMap<>();
+
+    private static SongManager instance;
 
     // Cache for thumbnails.
     private final NaiveFifoCache<String, Bitmap> thumbnailCache = new NaiveFifoCache<>(50);
@@ -45,18 +40,13 @@ public class SongManager implements SongLoader.SongListListener, SongLibrary {
 
     private final Resources resources;
     private final SongLoader songLoader;
-    private final MediaSessionCompat.Token token;
 
     /**
      * The private constructor.
      *
-     * @param token   The token of the session for which to retrieve the SongManager.
-     * @param context The calling {@link Context}, used to retrieve an instance of
-     *                {@link SongLoader}.
+     * @param context The calling Context, used to cache some references to Resources and such.
      */
-    private SongManager(@NonNull MediaSessionCompat.Token token,
-                        @NonNull Context context) {
-        this.token = token;
+    private SongManager(@NonNull Context context) {
         resources = context.getResources();
         songLoader = SongLoader.getInstance(context);
 
@@ -65,30 +55,15 @@ public class SongManager implements SongLoader.SongListListener, SongLibrary {
     }
 
     /**
-     * Only way to retrieve instances of the class.
+     * Wrapper method to retrieve the instance of this class more easily.
      *
-     * @param token   The token of the session for which to retrieve the SongManager.
-     * @param context The calling {@link Context}, used to retrieve an instance of
-     *                {@link SongLoader}.
+     * @param context The Calling context.
+     * @return The only SongManager instance.
      */
-    public static SongManager of(@NonNull MediaSessionCompat.Token token,
-                                 @NonNull Context context) {
-        SongManager instance = instancePool.get(token);
-        if (instance != null)
-            return instance;
-        SongManager newInstance = new SongManager(token, context);
-        instancePool.put(token, newInstance);
-        return newInstance;
-    }
-
-    /**
-     * Remove this instance from the referenced ones. Ideally, after this is called, no more calls
-     * to the instance can be made. The contents are still present, but there is no warranty of
-     * their correctness.
-     * TODO may get deleted by service but still be referenced by activities? Wut
-     */
-    public void free() {
-        instancePool.remove(token);
+    public static SongManager getInstance(@NonNull Context context) {
+        if (instance == null)
+            instance = new SongManager(context);
+        return instance;
     }
 
     /**

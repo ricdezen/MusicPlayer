@@ -111,7 +111,7 @@ public class PlayerWidget extends LinearLayout {
      */
     private void init(@NonNull Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
-        root = inflater.inflate(R.layout.player_widget_layout, this, true);
+        root = inflater.inflate(getWidgetLayout(), this, true);
 
         // Title, needs to be selected for marquee to work.
         titleView = root.findViewById(R.id.widget_song_title);
@@ -233,5 +233,14 @@ public class PlayerWidget extends LinearLayout {
             else
                 seekBar.setProgress(progress, true);
         }
+    }
+
+    /**
+     * Method to retrieve the layout for the Widget. Must have all the required views.
+     *
+     * @return {@link R.layout#player_widget_layout}.
+     */
+    protected int getWidgetLayout() {
+        return R.layout.player_widget_layout;
     }
 }

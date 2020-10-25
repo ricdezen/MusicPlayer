@@ -15,11 +15,9 @@ import androidx.annotation.Nullable;
 import androidx.media.MediaBrowserServiceCompat;
 import androidx.media.session.MediaButtonReceiver;
 
-import com.dezen.riccardo.musicplayer.song.SongManager;
 import com.dezen.riccardo.musicplayer.utils.NotificationHelper;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Service that manages the playback of songs.
@@ -30,7 +28,7 @@ public class PlayerService extends MediaBrowserServiceCompat {
 
     public static final String CYCLE_MODE = PlayerService.class.getName() + ".CYCLE_MODE";
     private static final int[] MODE_ICON = {
-            R.drawable.paperclip_black,
+            R.drawable.no_repeat,
             R.drawable.repeat_one_icon,
             R.drawable.repeat_all_icon,
             R.drawable.shuffle_icon
@@ -43,7 +41,6 @@ public class PlayerService extends MediaBrowserServiceCompat {
     private final CycleModeReceiver receiver = new CycleModeReceiver();
     private NotificationHelper notificationHelper;
     private MediaSessionCompat mediaSession;
-    private SongManager songManager;
     private PlayerWrapper player;
 
     // Methods to trigger the various modes in the player.
@@ -79,9 +76,6 @@ public class PlayerService extends MediaBrowserServiceCompat {
         player = new PlayerWrapper(this);
         mediaSession.setCallback(player);
 
-        // Song manager, in order to free it later. Token won't be null for sure.
-        songManager = SongManager.of(Objects.requireNonNull(getSessionToken()), this);
-
         // Receiver to change mode.
         registerReceiver(receiver, new IntentFilter(CYCLE_MODE));
     }
@@ -103,7 +97,6 @@ public class PlayerService extends MediaBrowserServiceCompat {
     public void onDestroy() {
         player.release();
         mediaSession.release();
-        songManager.free();
         stopForeground(true);
         unregisterReceiver(receiver);
         super.onDestroy();

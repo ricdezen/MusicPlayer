@@ -42,6 +42,8 @@ public class SongListFragment extends Fragment {
     // PlayList is empty. Will be loaded when the Manager is available.
     private PlayList library = new PlayList();
     private String currentSong;
+    private Integer previousItem;
+    private Integer currentItem;
     private int currentState = 0;
 
     // Runnable to update recycler.
@@ -50,8 +52,18 @@ public class SongListFragment extends Fragment {
             songsRecycler.getAdapter().notifyDataSetChanged();
     };
 
+    // Update the previous and current song's items.
+    private final Runnable updateItem = () -> {
+        if (songsRecycler.getAdapter() == null)
+            return;
+        if (previousItem != null)
+            songsRecycler.getAdapter().notifyItemChanged(previousItem);
+        if (currentItem != null)
+            songsRecycler.getAdapter().notifyItemChanged(currentItem);
+    };
+
     // When songs are updated, update List.
-    private final SongManager.LibraryObserver songObserver = (newLib) -> {
+    private final SongManager.LibraryObserver libraryObserver = (newLib) -> {
         library = newLib;
         onMainThread(updateRecycler);
     };
@@ -70,7 +82,9 @@ public class SongListFragment extends Fragment {
             super.onMetadataChanged(metadata);
             currentSong = (metadata == null) ? null :
                     metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
-            onMainThread(updateRecycler);
+            onMainThread(updateItem);
+            // Forget what the previous song was now, we don't care anymore.
+            previousItem = null;
         }
 
         /**
@@ -85,21 +99,7 @@ public class SongListFragment extends Fragment {
                 currentState = NOW_PLAYING;
             else
                 currentState = NOW_PAUSED;
-            onMainThread(updateRecycler);
-        }
-
-        /**
-         * Method called after the connection has been established, providing the SongManager that
-         * acts as a view to the whole Song library.
-         *
-         * @param manager The SongManager that just became available.
-         */
-        @Override
-        public void onManagerAvailable(@NonNull SongManager manager) {
-            songManager = manager;
-            songManager.observeLibrary(songObserver);
-            library = songManager.getLibrary();
-            onMainThread(updateRecycler);
+            onMainThread(updateItem);
         }
     };
 
@@ -113,6 +113,10 @@ public class SongListFragment extends Fragment {
         super.onAttach(context);
         playerClient = PlayerClient.of(context);
         playerClient.observe(playerListener, context);
+
+        songManager = SongManager.getInstance(context);
+        songManager.observeLibrary(libraryObserver);
+        library = songManager.getLibrary();
     }
 
     /**
@@ -149,7 +153,9 @@ public class SongListFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        songManager.removeObserver(songObserver);
+        // SongManager may have not been set if the PlayerClient did not connect.
+        if (songManager != null)
+            songManager.removeObserver(libraryObserver);
     }
 
     /**
@@ -159,6 +165,17 @@ public class SongListFragment extends Fragment {
      */
     private void onMainThread(Runnable runnable) {
         new Handler(Looper.getMainLooper()).post(runnable);
+    }
+
+    /**
+     * Play a song at a certain position and update references to previous and current song.
+     *
+     * @param position Position in the Playlist of the Song to play.
+     */
+    private void play(int position) {
+        previousItem = currentItem;
+        currentItem = position;
+        playerClient.play(library.get(position));
     }
 
     private class CustomAdapter extends RecyclerView.Adapter<CustomHolder> {
@@ -198,7 +215,7 @@ public class SongListFragment extends Fragment {
          */
         @Override
         public void onBindViewHolder(@NonNull CustomHolder holder, int position) {
-            holder.populate(library.get(position));
+            holder.populate(library.get(position), position);
         }
 
         @Override
@@ -234,11 +251,11 @@ public class SongListFragment extends Fragment {
             this.artistView = itemView.findViewById(R.id.textView_song_artist);
             this.imageView = itemView.findViewById(R.id.imageView_song);
             this.imageView.setClipToOutline(true);
-            this.itemView.setOnClickListener(v -> playerClient.play(this.song.getId()));
         }
 
-        public void populate(@NonNull Song song) {
+        public void populate(@NonNull Song song, int position) {
             this.song = song;
+            itemView.setOnClickListener(v -> play(position));
             titleView.setText(song.getTitle());
             albumView.setText(song.getAlbum());
             artistView.setText(song.getArtist());

@@ -1,6 +1,7 @@
 package com.dezen.riccardo.musicplayer;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -101,5 +102,12 @@ public class MainActivity extends AppCompatActivity {
 
         PlayerWidget widget = findViewById(R.id.player_widget);
         widget.setController(PlayerClient.of(this), this);
+        widget.setOnClickListener((v) -> {
+            Intent intent = new Intent(this, SongActivity.class);
+            // TODO maybe a new task is not needed. Think about session and SongManager Lifecycle.
+            // Maybe SongManager should become an app-wise ViewModel? Just to make sure it persists?
+            // Maybe overriding onNewIntent or whatever it's called.
+            startActivity(intent);
+        });
     }
 }

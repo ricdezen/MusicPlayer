@@ -20,7 +20,6 @@ import com.dezen.riccardo.musicplayer.utils.NotificationHelper;
 import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class PlayerWrapper extends MediaSessionCompat.Callback {
 
@@ -87,10 +86,7 @@ public class PlayerWrapper extends MediaSessionCompat.Callback {
     public PlayerWrapper(@NonNull PlayerService service) {
         // Reference SongManager for this Session.
         // The full library of Songs.
-        songManager = SongManager.of(
-                Objects.requireNonNull(service.getSessionToken()),
-                service
-        );
+        songManager = SongManager.getInstance(service);
         songManager.observePlayList(playListObserver);
         this.currentPlayList = songManager.getPlayList();
 

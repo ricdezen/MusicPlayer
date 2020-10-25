@@ -9,14 +9,12 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.widget.MediaController;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.dezen.riccardo.musicplayer.song.Song;
-import com.dezen.riccardo.musicplayer.song.SongManager;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +31,7 @@ import java.util.Set;
  *
  * @author Riccardo De Zen.
  */
-public class PlayerClient extends MediaControllerCompat.Callback implements MediaController.MediaPlayerControl {
+public class PlayerClient extends MediaControllerCompat.Callback {
 
     private static final Map<Integer, PlayerClient> instancePool = new HashMap<>();
 
@@ -67,9 +65,6 @@ public class PlayerClient extends MediaControllerCompat.Callback implements Medi
                         mediaController.registerCallback(PlayerClient.this);
                         PlayerClient.this.onMetadataChanged(mediaController.getMetadata());
                         PlayerClient.this.onPlaybackStateChanged(mediaController.getPlaybackState());
-                        PlayerClient.this.onManagerAvailable(
-                                SongManager.of(mediaController.getSessionToken(), context)
-                        );
                     }
 
                     @Override
@@ -137,10 +132,8 @@ public class PlayerClient extends MediaControllerCompat.Callback implements Medi
      */
     public void observe(@NonNull Observer observer, @NonNull Context context) {
         observers.add(observer);
-        if (mediaController != null) {
+        if (mediaController != null)
             observer.onMetadataChanged(mediaController.getMetadata());
-            observer.onManagerAvailable(SongManager.of(mediaController.getSessionToken(), context));
-        }
     }
 
     /**
@@ -273,28 +266,20 @@ public class PlayerClient extends MediaControllerCompat.Callback implements Medi
             c.onShuffleModeChanged(shuffleMode);
     }
 
-    public void onManagerAvailable(@NonNull SongManager manager) {
-        for (Observer c : observers)
-            c.onManagerAvailable(manager);
-    }
-
     // ? Overrides for control via a View.
 
-    @Override
     public void start() {
         int playbackState = mediaController.getPlaybackState().getState();
         if (playbackState != PlaybackStateCompat.STATE_PLAYING)
             mediaController.getTransportControls().play();
     }
 
-    @Override
     public void pause() {
         int playbackState = mediaController.getPlaybackState().getState();
         if (playbackState == PlaybackStateCompat.STATE_PLAYING)
             mediaController.getTransportControls().pause();
     }
 
-    @Override
     public int getDuration() {
         if (mediaController == null || mediaController.getMetadata() == null)
             return -1;
@@ -303,55 +288,28 @@ public class PlayerClient extends MediaControllerCompat.Callback implements Medi
         );
     }
 
-    @Override
     public int getCurrentPosition() {
         if (mediaController == null || mediaController.getPlaybackState() == null)
             return -1;
         return (int) mediaController.getPlaybackState().getPosition();
     }
 
-    @Override
     public void seekTo(int pos) {
         if (mediaController != null)
             mediaController.getTransportControls().seekTo(pos);
     }
 
-    @Override
     public boolean isPlaying() {
         int playbackState = mediaController.getPlaybackState().getState();
         return playbackState == PlaybackStateCompat.STATE_PLAYING;
     }
 
-    // TODO
-    @Override
-    public int getBufferPercentage() {
-        return 0;
-    }
-
-    @Override
     public boolean canPause() {
         return true;
     }
 
-    // TODO
-    @Override
-    public boolean canSeekBackward() {
-        return false;
-    }
-
-    // TODO
-    @Override
-    public boolean canSeekForward() {
-        return false;
-    }
-
-    // TODO
-    @Override
-    public int getAudioSessionId() {
-        return 0;
-    }
-
     // ? Useful getters
+
     @Nullable
     public MediaMetadataCompat getMetadata() {
         return (mediaController == null) ? null : mediaController.getMetadata();
@@ -363,15 +321,5 @@ public class PlayerClient extends MediaControllerCompat.Callback implements Medi
     }
 
     public abstract static class Observer extends MediaControllerCompat.Callback {
-        /**
-         * Method called after the connection has been established, providing the SongManager that
-         * acts as a view to the whole Song library.
-         *
-         * @param songManager The SongManager that just became available.
-         */
-        public void onManagerAvailable(@NonNull SongManager songManager) {
-
-        }
-
     }
 }
