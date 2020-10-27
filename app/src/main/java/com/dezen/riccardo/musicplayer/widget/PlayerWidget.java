@@ -34,8 +34,8 @@ public class PlayerWidget extends LinearLayout {
     private TextView titleView;
     private TextView positionView;
     private TextView durationView;
-    private ImageButton imageButton;
-    private PlayerClient controller;
+    private ImageButton playPauseButton;
+    private PlayerClient client;
 
     private boolean dragging = false;
     private int barMax = 100;
@@ -97,10 +97,20 @@ public class PlayerWidget extends LinearLayout {
         durationView = root.findViewById(R.id.song_duration);
 
         // Play/pause button.
-        imageButton = root.findViewById(R.id.central_button);
-        imageButton.setOnClickListener((v) -> {
-            if (controller != null)
-                controller.toggle();
+        playPauseButton = root.findViewById(R.id.central_button);
+        playPauseButton.setOnClickListener((v) -> {
+            if (client != null)
+                client.toggle();
+        });
+        View nextButton = root.findViewById(R.id.next_button);
+        nextButton.setOnClickListener((v) -> {
+            if (client != null)
+                client.next();
+        });
+        View previousButton = root.findViewById(R.id.previous_button);
+        previousButton.setOnClickListener((v) -> {
+            if (client != null)
+                client.previous();
         });
 
         // Song progress bar.
@@ -125,7 +135,7 @@ public class PlayerWidget extends LinearLayout {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 dragging = false;
-                controller.seekTo(seekBar.getProgress());
+                client.seekTo(seekBar.getProgress());
             }
         });
 
@@ -139,11 +149,11 @@ public class PlayerWidget extends LinearLayout {
      * @param context       The Context.
      */
     public void setController(@Nullable PlayerClient newController, @NonNull Context context) {
-        if (this.controller != null)
-            this.controller.removeObserver(observer);
+        if (this.client != null)
+            this.client.removeObserver(observer);
         if (newController != null)
             newController.observe(observer, context);
-        this.controller = newController;
+        this.client = newController;
         observer.onMetadataChanged(newController.getMetadata());
         observer.onPlaybackStateChanged(newController.getPlaybackState());
         updateProgress();
@@ -191,13 +201,13 @@ public class PlayerWidget extends LinearLayout {
      * not dragging the seekBar.
      */
     public void updateProgress() {
-        if (controller != null)
+        if (client != null)
             Utils.onMainThread(this::updateProgress, 1000);
-        if (controller == null || dragging)
+        if (client == null || dragging)
             return;
 
-        int duration = controller.getDuration();
-        int position = controller.getCurrentPosition();
+        int duration = client.getDuration();
+        int position = client.getCurrentPosition();
 
         if (duration >= 0 && position >= 0) {
             positionView.setText(Utils.millisToString(position));
@@ -230,7 +240,7 @@ public class PlayerWidget extends LinearLayout {
             hide();
         else {
             show();
-            imageButton.setImageResource(Utils.getButtonIcon(state.getState()));
+            playPauseButton.setImageResource(Utils.getButtonIcon(state.getState()));
         }
     }
 
@@ -243,7 +253,7 @@ public class PlayerWidget extends LinearLayout {
             return;
         }
         titleView.setText(metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE));
-        int newDuration = controller.getDuration();
+        int newDuration = client.getDuration();
         // Should never happen, you never know.
         if (newDuration < 0) {
             disable();

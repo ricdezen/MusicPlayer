@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">JAMP</string>
 
-    <!-- -->
-    <string name="pause">Pause</string>
+    <!-- Transport controls -->
+    <string name="pause">Play/Pause</string>
     <string name="previous">Previous</string>
     <string name="next">Next</string>
 

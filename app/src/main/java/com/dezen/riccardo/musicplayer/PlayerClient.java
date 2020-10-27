@@ -180,6 +180,26 @@ public class PlayerClient extends MediaControllerCompat.Callback {
             mediaController.getTransportControls().play();
     }
 
+    /**
+     * Tries to skip to the next song if possible.
+     */
+    public void next() {
+        if (mediaController == null)
+            return;
+
+        mediaController.getTransportControls().skipToNext();
+    }
+
+    /**
+     * Tries to skip to the previous song if possible.
+     */
+    public void previous() {
+        if (mediaController == null)
+            return;
+
+        mediaController.getTransportControls().skipToPrevious();
+    }
+
     // ? Overrides for controller callback.
 
     @Override

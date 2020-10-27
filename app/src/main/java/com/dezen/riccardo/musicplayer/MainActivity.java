@@ -105,7 +105,6 @@ public class MainActivity extends AppCompatActivity {
         widget.setOnClickListener((v) -> {
             Intent intent = new Intent(this, SongActivity.class);
             // TODO maybe a new task is not needed. Think about session and SongManager Lifecycle.
-            // Maybe SongManager should become an app-wise ViewModel? Just to make sure it persists?
             // Maybe overriding onNewIntent or whatever it's called.
             startActivity(intent);
         });

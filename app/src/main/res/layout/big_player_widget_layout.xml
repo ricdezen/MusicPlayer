@@ -30,9 +30,32 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:backgroundTint="@android:color/transparent"
-        app:layout_constraintBottom_toTopOf="@id/song_progress"
+        app:layout_constraintBottom_toTopOf="@+id/song_progress"
+        app:layout_constraintEnd_toStartOf="@+id/next_button"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/previous_button" />
+
+    <ImageView
+        android:id="@+id/next_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/central_button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/central_button"
+        app:layout_constraintTop_toTopOf="@+id/central_button"
+        app:srcCompat="@drawable/next_icon" />
+
+    <ImageView
+        android:id="@+id/previous_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/central_button"
+        app:layout_constraintEnd_toStartOf="@+id/central_button"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/central_button"
+        app:srcCompat="@drawable/previous_icon" />
 
     <SeekBar
         android:id="@+id/song_progress"
