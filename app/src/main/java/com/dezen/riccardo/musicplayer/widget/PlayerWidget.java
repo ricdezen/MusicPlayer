@@ -29,7 +29,7 @@ public class PlayerWidget extends LinearLayout {
 
     private static final String DEFAULT_TIME_TEXT = "00:00";
 
-    private View root;
+    protected View root;
     private SeekBar seekBar;
     private TextView titleView;
     private TextView positionView;
@@ -44,43 +44,18 @@ public class PlayerWidget extends LinearLayout {
      * Observer for the given PlayerClient.
      */
     private final PlayerClient.Observer observer = new PlayerClient.Observer() {
-        /**
-         * @param state The new state, show the widget only if the state is non null and is
-         *              playing or paused.
-         */
+
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat state) {
             super.onPlaybackStateChanged(state);
-            if (state == null ||
-                    (state.getState() != PlaybackStateCompat.STATE_PLAYING &&
-                            state.getState() != PlaybackStateCompat.STATE_PAUSED))
-                hide();
-            else {
-                show();
-                imageButton.setImageResource(Utils.getButtonIcon(state.getState()));
-            }
+            PlayerWidget.this.onPlaybackStateChanged(state);
         }
 
-        /**
-         * @param metadata The new metadata, if it is not null, show the title of the song.
-         */
+
         @Override
         public void onMetadataChanged(MediaMetadataCompat metadata) {
             super.onMetadataChanged(metadata);
-            if (metadata == null) {
-                disable();
-                return;
-            }
-            titleView.setText(metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE));
-            int newDuration = controller.getDuration();
-            // Should never happen, you never know.
-            if (newDuration < 0) {
-                disable();
-                return;
-            }
-            enable();
-            barMax = newDuration;
-            seekBar.setMax(barMax);
+            PlayerWidget.this.onMetadataChanged(metadata);
         }
     };
 
@@ -109,7 +84,7 @@ public class PlayerWidget extends LinearLayout {
      *
      * @param context The Context.
      */
-    private void init(@NonNull Context context) {
+    protected void init(@NonNull Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
         root = inflater.inflate(getWidgetLayout(), this, true);
 
@@ -242,5 +217,40 @@ public class PlayerWidget extends LinearLayout {
      */
     protected int getWidgetLayout() {
         return R.layout.player_widget_layout;
+    }
+
+    /**
+     * @param state The new state, show the widget only if the state is non null and is
+     *              playing or paused.
+     */
+    protected void onPlaybackStateChanged(PlaybackStateCompat state) {
+        if (state == null ||
+                (state.getState() != PlaybackStateCompat.STATE_PLAYING &&
+                        state.getState() != PlaybackStateCompat.STATE_PAUSED))
+            hide();
+        else {
+            show();
+            imageButton.setImageResource(Utils.getButtonIcon(state.getState()));
+        }
+    }
+
+    /**
+     * @param metadata The new metadata, if it is not null, show the title of the song.
+     */
+    protected void onMetadataChanged(MediaMetadataCompat metadata) {
+        if (metadata == null) {
+            disable();
+            return;
+        }
+        titleView.setText(metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE));
+        int newDuration = controller.getDuration();
+        // Should never happen, you never know.
+        if (newDuration < 0) {
+            disable();
+            return;
+        }
+        enable();
+        barMax = newDuration;
+        seekBar.setMax(barMax);
     }
 }

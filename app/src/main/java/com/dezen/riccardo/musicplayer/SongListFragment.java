@@ -37,7 +37,6 @@ public class SongListFragment extends Fragment {
     private PlayerClient playerClient;
     private SongManager songManager;
     private RecyclerView songsRecycler;
-    private View rootView;
 
     // PlayList is empty. Will be loaded when the Manager is available.
     private PlayList library = new PlayList();
@@ -48,13 +47,13 @@ public class SongListFragment extends Fragment {
 
     // Runnable to update recycler.
     private final Runnable updateRecycler = () -> {
-        if (songsRecycler.getAdapter() != null)
+        if (songsRecycler != null && songsRecycler.getAdapter() != null)
             songsRecycler.getAdapter().notifyDataSetChanged();
     };
 
     // Update the previous and current song's items.
     private final Runnable updateItem = () -> {
-        if (songsRecycler.getAdapter() == null)
+        if (songsRecycler != null && songsRecycler.getAdapter() == null)
             return;
         if (previousItem != null)
             songsRecycler.getAdapter().notifyItemChanged(previousItem);
@@ -131,28 +130,22 @@ public class SongListFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        rootView = inflater.inflate(R.layout.fragment_songlist, container, false);
-        return rootView;
-    }
-
-    /**
-     * Sets the list's adapter to listen to the song list.
-     */
-    @Override
-    public void onStart() {
-        super.onStart();
+        View rootView = inflater.inflate(R.layout.fragment_songlist, container, false);
         // First List setup.
         songsRecycler = rootView.findViewById(R.id.songs_recycler);
         songsRecycler.setLayoutManager(new LinearLayoutManager(getContext()));
         songsRecycler.setAdapter(new CustomAdapter());
+        return rootView;
     }
 
     /**
      * Stop Observing songs.
      */
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onDetach() {
+        super.onDetach();
+        if (playerClient != null)
+            playerClient.removeObserver(playerListener);
         // SongManager may have not been set if the PlayerClient did not connect.
         if (songManager != null)
             songManager.removeObserver(libraryObserver);
