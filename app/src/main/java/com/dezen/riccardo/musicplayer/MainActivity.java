@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(findViewById(R.id.toolbar));
         ensureNotificationServiceExists();
         playerClient = PlayerClient.of(this);
+
         if (checkPermissions()) {
             init();
         }
