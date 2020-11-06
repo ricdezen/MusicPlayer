@@ -1,0 +1,460 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:name="vector"
+            android:width="24dp"
+            android:height="24dp"
+            android:viewportWidth="24"
+            android:viewportHeight="24">
+            <path
+                android:name="path"
+                android:pathData="M 6 4 L 6 20"
+                android:strokeColor="@color/colorPrimary"
+                android:strokeWidth="1"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:name="path_1"
+                android:pathData="M 10 4 L 10 20"
+                android:strokeColor="@color/colorPrimary"
+                android:strokeWidth="1"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:name="path_2"
+                android:pathData="M 14 4 L 14 20"
+                android:strokeColor="@color/colorPrimary"
+                android:strokeWidth="1"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:name="path_3"
+                android:pathData="M 18 4 L 18 20"
+                android:strokeColor="@color/colorPrimary"
+                android:strokeWidth="1"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+        </vector>
+    </aapt:attr>
+    <target android:name="path">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:duration="300"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="300"
+                    android:duration="300"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="600"
+                    android:duration="300"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="900"
+                    android:duration="300"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1200"
+                    android:duration="300"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1500"
+                    android:duration="300"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1800"
+                    android:duration="300"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2100"
+                    android:duration="300"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2400"
+                    android:duration="300"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2700"
+                    android:duration="300"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="path_1">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:duration="375"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="375"
+                    android:duration="375"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="750"
+                    android:duration="375"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1125"
+                    android:duration="375"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1500"
+                    android:duration="375"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1875"
+                    android:duration="375"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2250"
+                    android:duration="375"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2625"
+                    android:duration="375"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="path_2">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="150"
+                    android:duration="150"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="300"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="450"
+                    android:duration="150"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="600"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="750"
+                    android:duration="150"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="900"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1050"
+                    android:duration="150"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1200"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1350"
+                    android:duration="150"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1500"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1650"
+                    android:duration="150"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1800"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1950"
+                    android:duration="150"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2100"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2250"
+                    android:duration="150"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2400"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2550"
+                    android:duration="150"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2700"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2850"
+                    android:duration="150"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="path_3">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:duration="250"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="250"
+                    android:duration="250"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="500"
+                    android:duration="250"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="750"
+                    android:duration="250"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1000"
+                    android:duration="250"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1250"
+                    android:duration="250"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1500"
+                    android:duration="250"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="1750"
+                    android:duration="250"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2000"
+                    android:duration="250"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2250"
+                    android:duration="250"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2500"
+                    android:duration="250"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator
+                    android:propertyName="trimPathStart"
+                    android:startOffset="2750"
+                    android:duration="250"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

@@ -1,8 +1,21 @@
 <resources>
-    <string name="app_name">Music Player</string>
+    <string name="app_name">JAMP</string>
+
+    <!-- Transport controls -->
+    <string name="pause">Play/Pause</string>
+    <string name="previous">Previous</string>
+    <string name="next">Next</string>
 
     <!-- Notifications -->
     <string name="notification_channel_id">music-player-foreground</string>
     <string name="notification_channel_name">Foreground Service</string>
     <string name="notification_channel_description">Notification showing on the status bar when the app is playing music.</string>
+
+    <!-- Error messages -->
+    <string name="no_notification_service_error">NullPointerException: no notification system Service available, this should not happen.</string>
+    <string name="session_unreachable_error">RemoteException: MediaSession unavailable, this should not happen.</string>
+    <string name="connection_failed_error">Could not connect to player service. This should not happen.</string>
+    <string name="file_open_error">Could not open file.</string>
+    <string name="service_shut_down_warning">The Player Service has been shut down.</string>
+    <string name="no_metadata_error">No metadata available.</string>
 </resources>

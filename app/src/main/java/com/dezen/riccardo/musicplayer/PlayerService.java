@@ -1,18 +1,22 @@
 package com.dezen.riccardo.musicplayer;
 
 import android.app.Notification;
-import android.app.Service;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.media.MediaPlayer;
-import android.os.IBinder;
-import android.widget.Toast;
+import android.content.IntentFilter;
+import android.os.Bundle;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.media.MediaBrowserServiceCompat;
+import androidx.media.session.MediaButtonReceiver;
 
-import com.dezen.riccardo.musicplayer.song.Song;
-import com.dezen.riccardo.musicplayer.song.SongManager;
+import com.dezen.riccardo.musicplayer.utils.NotificationHelper;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -20,12 +24,34 @@ import java.util.List;
  *
  * @author Riccardo De Zen.
  */
-public class PlayerService extends Service {
+public class PlayerService extends MediaBrowserServiceCompat {
 
-    private static final int NOTIFICATION_ID = 1234;
+    public static final String CYCLE_MODE = PlayerService.class.getName() + ".CYCLE_MODE";
+    private static final int[] MODE_ICON = {
+            R.drawable.no_repeat,
+            R.drawable.repeat_one_icon,
+            R.drawable.repeat_all_icon,
+            R.drawable.shuffle_icon
+    };
 
-    private SongManager songManager;
-    private MediaPlayer mediaPlayer;
+    public static final String LOG_TAG = "PlayerService";
+    public static final int NOTIFICATION_ID = 1234;
+    private static final int ACTIVITY_PENDING_INTENT_CODE = 4321;
+
+    private final CycleModeReceiver receiver = new CycleModeReceiver();
+    private NotificationHelper notificationHelper;
+    private MediaSessionCompat mediaSession;
+    private PlayerWrapper player;
+
+    // Methods to trigger the various modes in the player.
+    private final Runnable[] MODES = {
+            () -> player.noRepeat(),
+            () -> player.repeatOne(),
+            () -> player.repeatAll(),
+            () -> player.shuffle()
+    };
+
+    private int currentMode = 0;
 
     /**
      * When created the Service makes sure the notification channel is enabled if needed.
@@ -33,93 +59,116 @@ public class PlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        NotificationHelper.getInstance(this).createChannelIfNeeded();
+
+        // Ensure notification channel is created.
+        notificationHelper = NotificationHelper.getInstance(this);
+        notificationHelper.createChannelIfNeeded();
+
+        // Create MediaSession.
+        mediaSession = new MediaSessionCompat(this, LOG_TAG);
+        mediaSession.setSessionActivity(PendingIntent.getActivity(
+                this, ACTIVITY_PENDING_INTENT_CODE,
+                new Intent(this, MainActivity.class),
+                0
+        ));
+        // Set the token for this Service. Allows finding the Session from outside.
+        setSessionToken(mediaSession.getSessionToken());
+        player = new PlayerWrapper(this);
+        mediaSession.setCallback(player);
+
+        // Receiver to change mode.
+        registerReceiver(receiver, new IntentFilter(CYCLE_MODE));
     }
 
-    /**
-     * When the Service is started the useful Objects are initialized.
-     *
-     * @param intent  The Intent that started the Service.
-     * @param flags   The flags for the Intent.
-     * @param startId The startId for this method.
-     * @return The value of the method from the superclass.
-     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (songManager == null)
-            songManager = SongManager.getInstance(this);
-        if (mediaPlayer == null)
-            mediaPlayer = new MediaPlayer();
+        MediaButtonReceiver.handleIntent(mediaSession, intent);
         return super.onStartCommand(intent, flags, startId);
     }
 
     /**
-     * @param intent The Intent with the bind request to this Service.
-     * @return A {@link MusicController} binder, containing the actions that can be performed on
-     * the Service.
+     * When the Service is destroyed:
+     * - MediaPlayer is released.
+     * - MediaSession is released.
+     * - SongManager associated to the session is freed.
+     * - The Service removes its notification from the foreground.
+     */
+    @Override
+    public void onDestroy() {
+        player.release();
+        mediaSession.release();
+        stopForeground(true);
+        unregisterReceiver(receiver);
+        super.onDestroy();
+    }
+
+    /**
+     * TODO not yet implemented, song list is provided via other classes.
      */
     @Nullable
     @Override
-    public IBinder onBind(Intent intent) {
-        return new MusicController(this);
+    public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid,
+                                 @Nullable Bundle rootHints) {
+        return new BrowserRoot("HELLO_I_AM_TEMPORARY", null);
+    }
+
+    /**
+     * TODO not yet implemented, song list is provided via other classes.
+     */
+    @Override
+    public void onLoadChildren(@NonNull String parentId,
+                               @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
+
     }
 
     /**
      * Method to retrieve the Notification for this Service.
      *
-     * @return The {@link Notification} built through {@link NotificationHelper}.
+     * @return The {@link Notification} for this Service, built through {@link NotificationHelper}.
      */
-    private Notification getNotification() {
-        return NotificationHelper.getInstance(this).getServiceNotification(this);
+    public Notification getNotification() {
+        return notificationHelper.getPlayerServiceNotification(this);
     }
 
     /**
-     * Method to start playing a song at a certain position in the list.
-     *
-     * @param position The position of the song.
+     * @return The appropriate Drawable id for the current mode.
      */
-    public void play(int position) {
-        List<Song> songs = songManager.getSongs().getValue();
-        if (songs == null) return;
-        if (position < 0 || position >= songs.size()) return;
+    public int getModeDrawable() {
+        return MODE_ICON[currentMode];
+    }
 
-        if (mediaPlayer.isPlaying()) mediaPlayer.stop();
-        mediaPlayer.reset();
-        try {
-            mediaPlayer.setDataSource(songs.get(position).getDataPath());
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-            startForeground(
-                    NOTIFICATION_ID,
-                    getNotification()
-            );
-        } catch (IOException e) {
-            Toast.makeText(this, "Impossibile riprodurre il file", Toast.LENGTH_SHORT).show();
+    /**
+     * @return The {@link MediaSessionCompat} for this Service.
+     */
+    public MediaSessionCompat getMediaSession() {
+        return mediaSession;
+    }
+
+    /**
+     * Cycle through the 4 possible modes for playback.
+     */
+    private void nextMode() {
+        int nextMode = (currentMode + 1) % MODES.length;
+        // Run the method in the player.
+        MODES[nextMode].run();
+        // Update mode.
+        currentMode = nextMode;
+        // Update notification.
+        notificationHelper.notify(NOTIFICATION_ID, getNotification());
+    }
+
+    private class CycleModeReceiver extends BroadcastReceiver {
+
+        /**
+         * @param context The calling Context.
+         * @param intent  The Action. Only accepted type is {@link PlayerService#CYCLE_MODE}.
+         */
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!intent.getAction().equals(CYCLE_MODE))
+                return;
+            nextMode();
         }
     }
 
-    /**
-     * Method to pause the playback of a song.
-     */
-    public void pause() {
-        if (mediaPlayer != null)
-            mediaPlayer.pause();
-    }
-
-    /**
-     * Method to resume the playback of a song.
-     */
-    public void resume() {
-        if (mediaPlayer != null)
-            mediaPlayer.start();
-    }
-
-    /**
-     * When the Service is destroyed the media player is released.
-     */
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mediaPlayer.release();
-    }
 }

@@ -2,13 +2,19 @@ package com.dezen.riccardo.musicplayer.song;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.res.Resources;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.MutableLiveData;
+
+import com.dezen.riccardo.musicplayer.utils.CircularBlockingDeque;
+import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Class dedicated to loading the song list.
@@ -16,17 +22,15 @@ import java.util.List;
  * @author Riccardo De Zen.
  */
 public class SongLoader {
-    /**
-     * Fields extracted from the {@link android.content.ContentResolver}.
-     */
-    public static final String[] PROJECTION = {
-            MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.DURATION,
-            MediaStore.Audio.Media.DATA
-    };
+
+    // Parameters for Thread Pool.
+    private static final int DEVICE_CORES = Runtime.getRuntime().availableProcessors();
+    private static final int INITIAL_POOL_SIZE = Math.min(DEVICE_CORES, 3);
+    private static final int MAX_POOL_SIZE = DEVICE_CORES + 3;
+    private static final int KEEP_ALIVE_TIME = 3000;
+    private static final int MAX_QUEUE_SIZE = 25;
+    private static final TimeUnit KEEP_ALIVE_UNIT = TimeUnit.MILLISECONDS;
+
 
     /**
      * The only available instance of the class.
@@ -39,6 +43,22 @@ public class SongLoader {
     private ContentResolver contentResolver;
 
     /**
+     * App Resources.
+     */
+    private Resources resources;
+
+    /**
+     * Thread Pool to retrieve a song's image asynchronously.
+     */
+    private ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(
+            INITIAL_POOL_SIZE,
+            MAX_POOL_SIZE,
+            KEEP_ALIVE_TIME,
+            KEEP_ALIVE_UNIT,
+            new CircularBlockingDeque<>(MAX_QUEUE_SIZE)
+    );
+
+    /**
      * Private constructor.
      *
      * @param context The calling {@link Context}, used to retrieve the
@@ -47,6 +67,7 @@ public class SongLoader {
      */
     private SongLoader(Context context) {
         contentResolver = context.getApplicationContext().getContentResolver();
+        resources = context.getResources();
     }
 
     /**
@@ -64,11 +85,12 @@ public class SongLoader {
 
     /**
      * Method to retrieve an updated cursor from the {@link android.content.ContentResolver}.
+     * All columns are included by default.
      */
     private Cursor getCursor() {
         return contentResolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                PROJECTION,
+                null,
                 null,
                 null,
                 MediaStore.Audio.Media.TITLE
@@ -78,10 +100,47 @@ public class SongLoader {
     /**
      * Method used to start a background loading operation.
      *
-     * @param container The {@link MutableLiveData} that should contain the result of the loading.
+     * @param listener A Listener that will receive the result of the loading.
      */
-    public void loadSongList(@NonNull MutableLiveData<List<Song>> container) {
-        new SongLoadTask(getCursor(), container).execute();
+    public void loadSongList(@NonNull SongListListener listener) {
+        new SongLoadTask(getCursor(), listener, contentResolver).execute();
+    }
+
+    /**
+     * Load the bitmap for a Song, in full size. Will be a default one if not available.
+     *
+     * @param song The Song for which to get the thumbnail.
+     */
+    public void loadThumbnail(@NonNull Song song, @NonNull ThumbnailListener listener) {
+        poolExecutor.execute(() -> listener.onLoaded(song.getId(), Utils.getThumbnail(
+                song.getMetadata(),
+                contentResolver,
+                resources
+        )));
+    }
+
+    /**
+     * Interface used to define callbacks for {@link SongLoader#loadSongList(SongListListener)}.
+     */
+    public interface SongListListener {
+        /**
+         * Method called when the songs have been loaded.
+         *
+         * @param newList The new list of songs. May or may not be equal to the previous one.
+         */
+        void onLoaded(@NonNull List<Song> newList);
+    }
+
+    /**
+     * Interface for {@link SongLoader#loadThumbnail(Song, ThumbnailListener)} callback.
+     */
+    public interface ThumbnailListener {
+        /**
+         * Method called when a thumbnail has been loaded.
+         *
+         * @param thumbnail The loaded thumbnail.
+         */
+        void onLoaded(@NonNull String id, @NonNull Bitmap thumbnail);
     }
 
 }
