@@ -36,6 +36,7 @@ public class SongListFragment extends Fragment {
 
     private PlayerClient playerClient;
     private SongManager songManager;
+    private ArtStation artStation;
     private RecyclerView songsRecycler;
 
     // PlayList is empty. Will be loaded when the Manager is available.
@@ -113,6 +114,7 @@ public class SongListFragment extends Fragment {
         playerClient = PlayerClient.of(context);
         playerClient.observe(playerListener, context);
 
+        artStation = ArtStation.getInstance(context);
         songManager = SongManager.getInstance(context);
         songManager.observeLibrary(libraryObserver);
         library = songManager.getLibrary();
@@ -252,7 +254,7 @@ public class SongListFragment extends Fragment {
             titleView.setText(song.getTitle());
             albumView.setText(song.getAlbum());
             artistView.setText(song.getArtist());
-            songManager.getThumbnail(song.getId(), Utils.getThumbnailSize(imageView),
+            artStation.getThumbnail(song, Utils.getThumbnailSize(imageView),
                     (id, thumbnail) -> onMainThread(() -> {
                         if (this.song.getId().equals(id))
                             imageView.setImageBitmap(thumbnail);

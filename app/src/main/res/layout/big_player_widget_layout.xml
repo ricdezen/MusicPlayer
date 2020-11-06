@@ -44,7 +44,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/central_button"
         app:layout_constraintTop_toTopOf="@+id/central_button"
-        app:srcCompat="@drawable/next_icon" />
+        app:srcCompat="@drawable/next_icon_48" />
 
     <ImageView
         android:id="@+id/previous_button"
@@ -55,7 +55,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/central_button"
-        app:srcCompat="@drawable/previous_icon" />
+        app:srcCompat="@drawable/previous_icon_48" />
 
     <SeekBar
         android:id="@+id/song_progress"

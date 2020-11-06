@@ -2,19 +2,12 @@ package com.dezen.riccardo.musicplayer.song;
 
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
 
-import com.dezen.riccardo.musicplayer.utils.CircularBlockingDeque;
-import com.dezen.riccardo.musicplayer.utils.Utils;
-
 import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Class dedicated to loading the song list.
@@ -22,15 +15,6 @@ import java.util.concurrent.TimeUnit;
  * @author Riccardo De Zen.
  */
 public class SongLoader {
-
-    // Parameters for Thread Pool.
-    private static final int DEVICE_CORES = Runtime.getRuntime().availableProcessors();
-    private static final int INITIAL_POOL_SIZE = Math.min(DEVICE_CORES, 3);
-    private static final int MAX_POOL_SIZE = DEVICE_CORES + 3;
-    private static final int KEEP_ALIVE_TIME = 3000;
-    private static final int MAX_QUEUE_SIZE = 25;
-    private static final TimeUnit KEEP_ALIVE_UNIT = TimeUnit.MILLISECONDS;
-
 
     /**
      * The only available instance of the class.
@@ -40,23 +24,7 @@ public class SongLoader {
     /**
      * The {@link ContentResolver} to use when querying the data.
      */
-    private ContentResolver contentResolver;
-
-    /**
-     * App Resources.
-     */
-    private Resources resources;
-
-    /**
-     * Thread Pool to retrieve a song's image asynchronously.
-     */
-    private ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(
-            INITIAL_POOL_SIZE,
-            MAX_POOL_SIZE,
-            KEEP_ALIVE_TIME,
-            KEEP_ALIVE_UNIT,
-            new CircularBlockingDeque<>(MAX_QUEUE_SIZE)
-    );
+    private final ContentResolver contentResolver;
 
     /**
      * Private constructor.
@@ -67,7 +35,6 @@ public class SongLoader {
      */
     private SongLoader(Context context) {
         contentResolver = context.getApplicationContext().getContentResolver();
-        resources = context.getResources();
     }
 
     /**
@@ -107,19 +74,6 @@ public class SongLoader {
     }
 
     /**
-     * Load the bitmap for a Song, in full size. Will be a default one if not available.
-     *
-     * @param song The Song for which to get the thumbnail.
-     */
-    public void loadThumbnail(@NonNull Song song, @NonNull ThumbnailListener listener) {
-        poolExecutor.execute(() -> listener.onLoaded(song.getId(), Utils.getThumbnail(
-                song.getMetadata(),
-                contentResolver,
-                resources
-        )));
-    }
-
-    /**
      * Interface used to define callbacks for {@link SongLoader#loadSongList(SongListListener)}.
      */
     public interface SongListListener {
@@ -129,18 +83,6 @@ public class SongLoader {
          * @param newList The new list of songs. May or may not be equal to the previous one.
          */
         void onLoaded(@NonNull List<Song> newList);
-    }
-
-    /**
-     * Interface for {@link SongLoader#loadThumbnail(Song, ThumbnailListener)} callback.
-     */
-    public interface ThumbnailListener {
-        /**
-         * Method called when a thumbnail has been loaded.
-         *
-         * @param thumbnail The loaded thumbnail.
-         */
-        void onLoaded(@NonNull String id, @NonNull Bitmap thumbnail);
     }
 
 }

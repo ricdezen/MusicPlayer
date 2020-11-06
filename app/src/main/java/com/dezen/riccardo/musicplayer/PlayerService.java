@@ -28,10 +28,10 @@ public class PlayerService extends MediaBrowserServiceCompat {
 
     public static final String CYCLE_MODE = PlayerService.class.getName() + ".CYCLE_MODE";
     private static final int[] MODE_ICON = {
-            R.drawable.no_repeat,
-            R.drawable.repeat_one_icon,
-            R.drawable.repeat_all_icon,
-            R.drawable.shuffle_icon
+            R.drawable.no_repeat_24,
+            R.drawable.repeat_one_icon_24,
+            R.drawable.repeat_all_icon_24,
+            R.drawable.shuffle_icon_24
     };
 
     public static final String LOG_TAG = "PlayerService";

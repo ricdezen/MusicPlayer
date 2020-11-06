@@ -135,7 +135,7 @@ public class NotificationHelper {
         // Icon depending on playback state.
         int toggleIcon =
                 (controller.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) ?
-                        R.drawable.pause_icon : R.drawable.play_icon;
+                        R.drawable.pause_icon_24 : R.drawable.play_icon_24;
 
         builder
                 .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -156,14 +156,14 @@ public class NotificationHelper {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 // Media control buttons
                 .addAction(service.getModeDrawable(),
-                        "Mode",
+                        resources.getString(R.string.mode),
                         PendingIntent.getBroadcast(
                                 service,
                                 0,
                                 new Intent(PlayerService.CYCLE_MODE),
                                 PendingIntent.FLAG_CANCEL_CURRENT
                         ))
-                .addAction(R.drawable.previous_icon,
+                .addAction(R.drawable.previous_icon_24,
                         resources.getString(R.string.previous),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
                                 service,
@@ -176,7 +176,7 @@ public class NotificationHelper {
                                 service,
                                 PlaybackStateCompat.ACTION_PLAY_PAUSE
                         ))
-                .addAction(R.drawable.next_icon,
+                .addAction(R.drawable.next_icon_24,
                         resources.getString(R.string.next),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
                                 service,

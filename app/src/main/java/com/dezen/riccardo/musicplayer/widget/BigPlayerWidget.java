@@ -8,11 +8,15 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.dezen.riccardo.musicplayer.ArtStation;
 import com.dezen.riccardo.musicplayer.R;
+import com.dezen.riccardo.musicplayer.song.Song;
 import com.dezen.riccardo.musicplayer.song.SongManager;
+import com.dezen.riccardo.musicplayer.utils.Utils;
 
 public class BigPlayerWidget extends PlayerWidget {
 
+    private ArtStation artStation;
     private SongManager songManager;
     private ImageView thumbnailView;
 
@@ -41,6 +45,7 @@ public class BigPlayerWidget extends PlayerWidget {
     @Override
     protected void init(@NonNull Context context) {
         super.init(context);
+        artStation = ArtStation.getInstance(context);
         songManager = SongManager.getInstance(context);
         thumbnailView = root.findViewById(R.id.thumbnail_big);
         thumbnailView.setClipToOutline(true);
@@ -61,8 +66,10 @@ public class BigPlayerWidget extends PlayerWidget {
         if (metadata == null || metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID) == null)
             return;
         String id = metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
-        songManager.getThumbnail(id, (resultId, thumbnail) ->
-                thumbnailView.setImageBitmap(thumbnail)
-        );
+        Song song = songManager.getLibrary().get(id);
+        if (song != null)
+            artStation.getThumbnail(song, (resultId, thumbnail) ->
+                    Utils.onMainThread(() -> thumbnailView.setImageBitmap(thumbnail))
+            );
     }
 }

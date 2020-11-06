@@ -2,13 +2,8 @@ package com.dezen.riccardo.musicplayer.song;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.util.Size;
 
 import androidx.annotation.NonNull;
-
-import com.dezen.riccardo.musicplayer.utils.NaiveFifoCache;
-import com.dezen.riccardo.musicplayer.utils.Utils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -25,9 +20,6 @@ import java.util.Set;
 public class SongManager implements SongLoader.SongListListener, SongLibrary {
 
     private static SongManager instance;
-
-    // Cache for thumbnails.
-    private final NaiveFifoCache<String, Bitmap> thumbnailCache = new NaiveFifoCache<>(50);
 
     // Observers for the PlayList.
     private final Set<PlayListObserver> playListObservers = new HashSet<>();
@@ -105,48 +97,6 @@ public class SongManager implements SongLoader.SongListListener, SongLibrary {
     public synchronized void resetPlayList() {
         currentPlayList = null;
         notifyPlayListObservers();
-    }
-
-    /**
-     * Returns a Bitmap for a Song. The operation is performed asynchronously. If the song is
-     * unknown, the operation is performed synchronously immediately.
-     *
-     * @param id       The id of the Song.
-     * @param listener The callback for when the loading is done.
-     */
-    public void getThumbnail(@NonNull String id, @NonNull SongLoader.ThumbnailListener listener) {
-        Song song = songLibrary.get(id);
-        if (song == null) {
-            listener.onLoaded(id, Utils.getDefaultThumbnail(resources));
-            return;
-        }
-
-        Bitmap cached = thumbnailCache.get(id);
-        if (cached != null)
-            listener.onLoaded(id, cached);
-        else {
-            listener.onLoaded(id, Utils.getDefaultThumbnail(resources));
-            songLoader.loadThumbnail(song, (resultId, thumbnail) -> {
-                thumbnailCache.add(resultId, thumbnail);
-                listener.onLoaded(resultId, thumbnail);
-            });
-        }
-    }
-
-    /**
-     * Returns a Bitmap for a Song. The operation is performed asynchronously. If the song is
-     * unknown, the operation is performed synchronously immediately.
-     *
-     * @param id       The id of the Song.
-     * @param size     The target size.
-     * @param listener The callback for when the loading is done.
-     */
-    public void getThumbnail(@NonNull String id, Size size,
-                             @NonNull SongLoader.ThumbnailListener listener) {
-        // Wrap the listener to resize the result.
-        getThumbnail(id, (resultId, thumbnail) ->
-                listener.onLoaded(resultId, Utils.resizeThumbnail(thumbnail, size))
-        );
     }
 
     /**

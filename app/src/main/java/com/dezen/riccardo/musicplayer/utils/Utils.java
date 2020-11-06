@@ -209,8 +209,8 @@ public class Utils {
      */
     public static int getButtonIcon(int playbackState) {
         if (playbackState == PlaybackStateCompat.STATE_PLAYING)
-            return R.drawable.pause_icon;
-        return R.drawable.play_icon;
+            return R.drawable.pause_icon_48;
+        return R.drawable.play_icon_48;
     }
 
     /**
