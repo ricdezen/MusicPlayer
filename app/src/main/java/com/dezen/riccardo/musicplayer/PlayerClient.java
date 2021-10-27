@@ -340,6 +340,14 @@ public class PlayerClient extends MediaControllerCompat.Callback {
         return (mediaController == null) ? null : mediaController.getPlaybackState();
     }
 
+    @Nullable
+    public String getCurrentSongId() {
+        MediaMetadataCompat metadata = getMetadata();
+        if (metadata != null)
+            return metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+        return null;
+    }
+
     public abstract static class Observer extends MediaControllerCompat.Callback {
     }
 }

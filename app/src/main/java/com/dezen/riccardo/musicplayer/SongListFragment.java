@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.dezen.riccardo.musicplayer.song.PlayList;
 import com.dezen.riccardo.musicplayer.song.Song;
@@ -54,7 +55,7 @@ public class SongListFragment extends Fragment {
 
     // Update the previous and current song's items.
     private final Runnable updateItem = () -> {
-        if (songsRecycler != null && songsRecycler.getAdapter() == null)
+        if (songsRecycler == null || songsRecycler.getAdapter() == null)
             return;
         if (previousItem != null)
             songsRecycler.getAdapter().notifyItemChanged(previousItem);
@@ -80,8 +81,7 @@ public class SongListFragment extends Fragment {
         @Override
         public void onMetadataChanged(MediaMetadataCompat metadata) {
             super.onMetadataChanged(metadata);
-            currentSong = (metadata == null) ? null :
-                    metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+            currentSong = playerClient.getCurrentSongId();
             onMainThread(updateItem);
             // Forget what the previous song was now, we don't care anymore.
             previousItem = null;
@@ -136,6 +136,11 @@ public class SongListFragment extends Fragment {
         // First List setup.
         songsRecycler = rootView.findViewById(R.id.songs_recycler);
         songsRecycler.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        RecyclerView.ItemAnimator animator = songsRecycler.getItemAnimator();
+        if (animator instanceof SimpleItemAnimator)
+            ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
+
         songsRecycler.setAdapter(new CustomAdapter());
         return rootView;
     }
